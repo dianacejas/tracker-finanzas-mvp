@@ -1,9 +1,10 @@
-# 💰 Tracker de Finanzas Personales
+# Tracker de Finanzas Personales
 
+![CI](https://github.com/dianacejas/tracker-finanzas-mvp/actions/workflows/ci.yml/badge.svg)
 ![Django](https://img.shields.io/badge/Django-5.0-092E20?style=flat&logo=django&logoColor=white)
 ![DRF](https://img.shields.io/badge/Django%20REST-Framework-ff1717?style=flat)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat&logo=vite&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat&logo=vite&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind%20CSS-3-38B2AC?style=flat&logo=tailwindcss&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -11,7 +12,7 @@ Aplicación web para registrar ingresos y gastos, controlar presupuestos mensual
 
 ---
 
-## 📖 Descripción del Producto
+## Descripción del Producto
 
 **Tracker de Finanzas Personales** resuelve un problema cotidiano: la dificultad de saber cuánto se gana, cuánto se gasta y en qué se consume el dinero mes a mes, sin depender de hojas de cálculo manuales y propensas al error.
 
@@ -20,24 +21,20 @@ Aplicación web para registrar ingresos y gastos, controlar presupuestos mensual
 - Control preventivo del gasto mediante presupuestos mensuales con semáforo de alerta.
 - Visibilidad inmediata del balance: totales, distribución por categoría y evolución mensual.
 
-## 📸 Capturas
+## Capturas
 
-> *Capturas de pantalla pendientes al cierre del Sprint 4 (dashboard, movimientos y presupuestos).*
+> Las capturas del dashboard, los movimientos y los presupuestos se incorporan al cierre del Sprint 4.
 
-| Login | Dashboard |
-| :---: | :---: |
-| 🖼️ *placeholder* | 🖼️ *placeholder* |
-
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 | Capa | Tecnologías |
 |---|---|
-| **Backend** | Django 5, Django REST Framework, djangorestframework-simplejwt, django-filter, django-environ, drf-spectacular, django-cors-headers |
-| **Frontend** | React 19 + Vite, Tailwind CSS v3, React Router, Axios, Lucide React, clsx + tailwind-merge |
+| **Backend** | Django 5, Django REST Framework, djangorestframework-simplejwt, django-filter, python-dotenv, drf-spectacular, django-cors-headers |
+| **Frontend** | React 19 + Vite 8, Tailwind CSS v3, React Router, Axios, Lucide React, clsx + tailwind-merge |
 | **Base de datos** | SQLite (desarrollo) · PostgreSQL (producción, vía Docker Compose) |
 | **Calidad y entrega** | Django TestCase + APITestCase, GitHub Actions CI, Docker |
 
-## 🏗️ Arquitectura
+## Arquitectura
 
 Monorepo con dos aplicaciones independientes que se comunican mediante una API REST versionada (`/api/v1/`).
 
@@ -47,23 +44,25 @@ tracker-finanzas-mvp/
 │   ├── config/                   # Proyecto: urls, asgi/wsgi
 │   │   └── settings/             # base.py · local.py · production.py
 │   ├── apps/
-│   │   ├── users/                # Custom User (email como identificador)
-│   │   ├── categories/           # Categorías globales + privadas
-│   │   ├── transactions/         # Ingresos/gastos + agregaciones
-│   │   └── budgets/              # Presupuestos mensuales y semáforos
+│   │   └── users/                # Custom User (email como identificador)
 │   ├── requirements.txt
 │   └── .env.example
 ├── frontend/                     # SPA React (Vite + Tailwind)
 │   └── src/
-│       ├── api/                  # Cliente Axios + interceptor JWT
-│       ├── components/           # UI reutilizable (ui/layout/shared)
-│       ├── context/              # AuthContext (access token en memoria)
-│       ├── pages/                # Login · Register · Dashboard · ...
-│       └── routes/               # React Router + ProtectedRoute
+│       ├── api/                  # Cliente Axios + interceptor de refresco
+│       ├── components/common/    # UI reutilizable (Button, Input)
+│       ├── context/              # AuthContext + useAuth
+│       ├── layouts/              # AuthLayout · AppLayout
+│       ├── pages/                # Login · Register · Dashboard
+│       ├── routes/               # AppRoutes + guardias de ruta
+│       └── utils/                # Helpers (cn, formato)
+├── .github/workflows/ci.yml      # Integración continua
 ├── .gitignore                    # Zero-leak: .env, BD, node_modules
 ├── .editorconfig
 └── README.md
 ```
+
+Las apps `categories`, `transactions` y `budgets` se incorporan en los Sprints 2 y 3.
 
 **Decisiones clave de diseño:**
 - **Autenticación JWT segura:** *Access token* en memoria (estado de React) y *refresh token* en cookie `HttpOnly`, con rotación y lista negra al cerrar sesión. Interceptor de Axios que renueva el token ante un 401 y reintenta la petición sin interrumpir al usuario.
@@ -71,9 +70,9 @@ tracker-finanzas-mvp/
 - **Categorías híbridas:** globales del sistema (solo lectura, compartidas) + categorías privadas por usuario. Borrado protegido cuando existen transacciones asociadas.
 - **Precisión contable:** montos en `DecimalField`, sin punto flotante.
 
-## 🚀 Inicio Rápido
+## Inicio Rápido
 
-**Prerrequisitos:** Python 3.11+, Node.js 20+, Git.
+**Prerrequisitos:** Python 3.11+ (probado en 3.12 y 3.14), Node.js 20+ (probado en 24), Git.
 
 ```bash
 # 1. Clonar
@@ -115,17 +114,54 @@ REFRESH_TOKEN_LIFETIME_DAYS=7
 VITE_API_BASE_URL=http://localhost:8000/api/v1
 ```
 
-> 🔒 **Política de seguridad:** los archivos `.env` nunca se commitean. Solo se publican plantillas `.env.example` con valores ficticios.
+> **Política de seguridad:** los archivos `.env` nunca se commitean. Solo se publican plantillas `.env.example` con valores ficticios. El *refresh token* viaja en una cookie `HttpOnly` que JavaScript no puede leer.
 
-## 🗺️ Roadmap
+## Pruebas y CI
+
+```bash
+# Backend: suite completa (36 pruebas)
+cd backend && python manage.py test
+
+# Frontend: análisis estático y compilación de producción
+cd frontend && npm run lint && npm run build
+```
+
+Cada push y cada pull request ejecuta ambos trabajos mediante GitHub Actions, definidos en `.github/workflows/ci.yml`:
+
+| Trabajo | Entorno | Comandos |
+|---|---|---|
+| **Backend tests** | Python 3.12 | `python manage.py test` |
+| **Frontend build** | Node 24 | `npm run lint` · `npm run build` |
+
+## Roadmap
 
 | Sprint | Objetivo | Estado |
 |---|---|---|
-| **Sprint 1** | Fundaciones, arquitectura y autenticación JWT segura | 🔄 En curso |
-| **Sprint 2** | Núcleo financiero: categorías y CRUD de transacciones | ⬜ Pendiente |
-| **Sprint 3** | Métricas, presupuestos con semáforos y dashboard | ⬜ Pendiente |
-| **Sprint 4** | Tests de calidad, documentación OpenAPI, Docker y deploy | ⬜ Pendiente |
+| **Sprint 1** | Fundaciones, arquitectura y autenticación JWT segura | Completado |
+| **Sprint 2** | Núcleo financiero: categorías y CRUD de transacciones | Pendiente |
+| **Sprint 3** | Métricas, presupuestos con semáforos y dashboard | Pendiente |
+| **Sprint 4** | Tests de calidad, documentación OpenAPI, Docker y deploy | Pendiente |
 
-## 📄 Licencia
+## Estado actual
+
+El Sprint 1 deja el ciclo de autenticación funcionando de punta a punta, verificado por integración continua en cada push y pull request.
+
+**Backend**
+
+- Modelo de usuario personalizado con email como identificador y moneda preferida ISO 4217.
+- Endpoints de registro, login, refresco de token, cierre de sesión y perfil.
+- *Access token* de vida corta, *refresh token* rotativo y revocable (lista negra).
+- 36 pruebas automatizadas: modelo, manager, registro, login, refresco, perfil y logout.
+
+**Frontend**
+
+- Cliente Axios con interceptor que renueva el token ante un 401 y reintenta la petición.
+- Los 401 simultáneos comparten un único refresco, evitando invalidar la sesión por rotaciones concurrentes.
+- Contexto de autenticación con restauración silenciosa de la sesión al recargar.
+- Guardias de rutas públicas y privadas, y vistas de login, registro y dashboard.
+
+**Pendiente para los próximos sprints:** las apps de dominio (`categories`, `transactions`, `budgets`) y el dashboard con métricas y semáforos de presupuesto.
+
+## Licencia
 
 Distribuido bajo la licencia [MIT](LICENSE).
