@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   fetchProfileRequest,
@@ -9,8 +9,7 @@ import {
   updateProfileRequest,
 } from "../api/authApi";
 import { clearAccessToken, setAccessToken, setSessionExpiredHandler } from "../api/tokenStore";
-
-const AuthContext = createContext(null);
+import { AuthContext } from "./authContextObject";
 
 /**
  * Proveedor global de autenticacion.
@@ -112,13 +111,4 @@ export function AuthProvider({ children }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-/** Consume el contexto de autenticacion. */
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === null) {
-    throw new Error("useAuth debe usarse dentro de un AuthProvider.");
-  }
-  return context;
 }
