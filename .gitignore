@@ -1,0 +1,71 @@
+# ============================================================
+# Tracker de Finanzas Personales — .gitignore raíz
+# Cubre backend (Python/Django), frontend (Node/Vite), BD,
+# variables de entorno, IDEs y artefactos de compilación.
+# ============================================================
+
+# ---------- Variables de entorno (Zero-Leak Policy) ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.pyd
+*.egg-info/
+*.egg
+.eggs/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+
+# ---------- Entornos virtuales ----------
+venv/
+.venv/
+env/
+ENV/
+
+# ---------- Django ----------
+*.log
+local_settings.py
+staticfiles/
+media/
+
+# ---------- Bases de datos ----------
+*.sqlite3
+db.sqlite3
+db.sqlite3-journal
+
+# ---------- Node / Vite / Frontend ----------
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+dist-ssr/
+build/
+coverage/
+*.local
+.vite/
+
+# ---------- IDEs y editores ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------- Sistema ----------
+.DS_Store
+Thumbs.db
+
+# ---------- Seguridad ----------
+*.pem
+*.key
+*.p12
