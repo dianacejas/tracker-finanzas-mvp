@@ -8,7 +8,9 @@ from django.urls import include, path
 #   apps.categories   -> /api/v1/categories/...
 #   apps.transactions -> /api/v1/transactions/...
 #   apps.budgets      -> /api/v1/budgets/...
-api_v1_urlpatterns = []
+api_v1_urlpatterns = [
+    path("auth/", include("apps.users.urls")),
+]
 
 urlpatterns = [
     path("admin/", admin.site.urls),
