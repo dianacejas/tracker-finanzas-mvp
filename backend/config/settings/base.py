@@ -21,6 +21,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "drf_spectacular",
+    # Apps del proyecto
+    "apps.users",
 ]
 
 MIDDLEWARE = [
@@ -53,6 +55,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
+
+# Modelo de usuario personalizado
+AUTH_USER_MODEL = "users.User"
 
 # Contraseñas
 AUTH_PASSWORD_VALIDATORS = [
