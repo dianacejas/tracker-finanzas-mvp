@@ -33,9 +33,9 @@ Aplicación web para registrar ingresos y gastos, controlar presupuestos mensual
 | Capa | Tecnologías |
 |---|---|
 | **Backend** | Django 5, Django REST Framework, djangorestframework-simplejwt, django-filter, django-environ, drf-spectacular, django-cors-headers |
-| **Frontend** | React 18 + Vite, Tailwind CSS, React Router v6, Axios, React Hook Form, Recharts, Lucide React, clsx + tailwind-merge |
+| **Frontend** | React 19 + Vite, Tailwind CSS v3, React Router, Axios, Lucide React, clsx + tailwind-merge |
 | **Base de datos** | SQLite (desarrollo) · PostgreSQL (producción, vía Docker Compose) |
-| **Calidad y entrega** | pytest + Vitest, GitHub Actions CI, Docker |
+| **Calidad y entrega** | Django TestCase + APITestCase, GitHub Actions CI, Docker |
 
 ## 🏗️ Arquitectura
 
