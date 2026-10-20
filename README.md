@@ -15,10 +15,6 @@ Aplicación web para registrar ingresos y gastos, controlar presupuestos mensual
 
 **Tracker de Finanzas Personales** resuelve un problema cotidiano: la dificultad de saber cuánto se gana, cuánto se gasta y en qué se consume el dinero mes a mes, sin depender de hojas de cálculo manuales y propensas al error.
 
-**Dirigido a:**
-- 🧑‍💼 **Usuarios finales** que buscan una alternativa simple y privada a las apps financieras comerciales.
-- 🧑‍💻 **Reclutadores y equipos técnicos** que evalúan una referencia de ingeniería full-stack con seguridad real (JWT, aislamiento multi-tenant) y arquitectura limpia.
-
 **Problemas que resuelve:**
 - Registro rápido de movimientos con categorización clara (ingresos/gastos).
 - Control preventivo del gasto mediante presupuestos mensuales con semáforo de alerta.
