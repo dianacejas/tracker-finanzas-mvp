@@ -44,7 +44,8 @@ tracker-finanzas-mvp/
 │   ├── config/                   # Proyecto: urls, asgi/wsgi
 │   │   └── settings/             # base.py · local.py · production.py
 │   ├── apps/
-│   │   └── users/                # Custom User (email como identificador)
+│   │   ├── users/                # Custom User (email como identificador)
+│   │   └── categories/           # Categorías globales + privadas
 │   ├── requirements.txt
 │   └── .env.example
 ├── frontend/                     # SPA React (Vite + Tailwind)
@@ -62,7 +63,7 @@ tracker-finanzas-mvp/
 └── README.md
 ```
 
-Las apps `categories`, `transactions` y `budgets` se incorporan en los Sprints 2 y 3.
+Las apps `transactions` y `budgets` se incorporan en los Sprints 2 y 3.
 
 **Decisiones clave de diseño:**
 - **Autenticación JWT segura:** *Access token* en memoria (estado de React) y *refresh token* en cookie `HttpOnly`, con rotación y lista negra al cerrar sesión. Interceptor de Axios que renueva el token ante un 401 y reintenta la petición sin interrumpir al usuario.
@@ -119,7 +120,7 @@ VITE_API_BASE_URL=http://localhost:8000/api/v1
 ## Pruebas y CI
 
 ```bash
-# Backend: suite completa (36 pruebas)
+# Backend: suite completa (83 pruebas)
 cd backend && python manage.py test
 
 # Frontend: análisis estático y compilación de producción
@@ -138,20 +139,23 @@ Cada push y cada pull request ejecuta ambos trabajos mediante GitHub Actions, de
 | Sprint | Objetivo | Estado |
 |---|---|---|
 | **Sprint 1** | Fundaciones, arquitectura y autenticación JWT segura | Completado |
-| **Sprint 2** | Núcleo financiero: categorías y CRUD de transacciones | Pendiente |
+| **Sprint 2** | Núcleo financiero: categorías y CRUD de transacciones | En curso |
 | **Sprint 3** | Métricas, presupuestos con semáforos y dashboard | Pendiente |
 | **Sprint 4** | Tests de calidad, documentación OpenAPI, Docker y deploy | Pendiente |
 
 ## Estado actual
 
-El Sprint 1 deja el ciclo de autenticación funcionando de punta a punta, verificado por integración continua en cada push y pull request.
+El Sprint 1 dejó el ciclo de autenticación funcionando de punta a punta. El Sprint 2 suma el módulo de categorías.
 
 **Backend**
 
 - Modelo de usuario personalizado con email como identificador y moneda preferida ISO 4217.
 - Endpoints de registro, login, refresco de token, cierre de sesión y perfil.
 - *Access token* de vida corta, *refresh token* rotativo y revocable (lista negra).
-- 36 pruebas automatizadas: modelo, manager, registro, login, refresco, perfil y logout.
+- Modelo `Category` con alcance global (sistema) o privado (por cuenta).
+- CRUD de categorías bajo `/api/v1/categories/` con aislamiento estricto entre cuentas.
+- Comando `seed_categories` idempotente que carga las 11 categorías iniciales del sistema.
+- 83 pruebas automatizadas: autenticación, modelo de categorías, API, aislamiento y seed.
 
 **Frontend**
 
