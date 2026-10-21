@@ -45,7 +45,8 @@ tracker-finanzas-mvp/
 │   │   └── settings/             # base.py · local.py · production.py
 │   ├── apps/
 │   │   ├── users/                # Custom User (email como identificador)
-│   │   └── categories/           # Categorías globales + privadas
+│   │   ├── categories/           # Categorías globales + privadas
+│   │   └── transactions/         # Movimientos de ingreso y gasto
 │   ├── requirements.txt
 │   └── .env.example
 ├── frontend/                     # SPA React (Vite + Tailwind)
@@ -63,13 +64,14 @@ tracker-finanzas-mvp/
 └── README.md
 ```
 
-Las apps `transactions` y `budgets` se incorporan en los Sprints 2 y 3.
+La app `budgets` se incorpora en el Sprint 3.
 
 **Decisiones clave de diseño:**
 - **Autenticación JWT segura:** *Access token* en memoria (estado de React) y *refresh token* en cookie `HttpOnly`, con rotación y lista negra al cerrar sesión. Interceptor de Axios que renueva el token ante un 401 y reintenta la petición sin interrumpir al usuario.
 - **Aislamiento multi-tenant:** toda consulta se restringe al usuario autenticado; el `user_id` nunca se acepta desde el payload.
 - **Categorías híbridas:** globales del sistema (solo lectura, compartidas) + categorías privadas por usuario. Borrado protegido cuando existen transacciones asociadas.
-- **Precisión contable:** montos en `DecimalField`, sin punto flotante.
+- **Precisión contable:** montos en `DecimalField`, sin punto flotante, con una restricción de base de datos que impide guardar importes no positivos.
+- **Coherencia de tipos:** una categoría de gasto no admite ingresos y viceversa; las categorías de tipo `BOTH` aceptan ambos.
 
 ## Inicio Rápido
 
@@ -120,7 +122,7 @@ VITE_API_BASE_URL=http://localhost:8000/api/v1
 ## Pruebas y CI
 
 ```bash
-# Backend: suite completa (83 pruebas)
+# Backend: suite completa (155 pruebas)
 cd backend && python manage.py test
 
 # Frontend: análisis estático y compilación de producción
@@ -145,7 +147,7 @@ Cada push y cada pull request ejecuta ambos trabajos mediante GitHub Actions, de
 
 ## Estado actual
 
-El Sprint 1 dejó el ciclo de autenticación funcionando de punta a punta. El Sprint 2 suma el módulo de categorías.
+El Sprint 1 dejó el ciclo de autenticación funcionando de punta a punta. El Sprint 2 avanza con el núcleo financiero: categorías y movimientos ya están operativos en la API.
 
 **Backend**
 
@@ -155,7 +157,9 @@ El Sprint 1 dejó el ciclo de autenticación funcionando de punta a punta. El Sp
 - Modelo `Category` con alcance global (sistema) o privado (por cuenta).
 - CRUD de categorías bajo `/api/v1/categories/` con aislamiento estricto entre cuentas.
 - Comando `seed_categories` idempotente que carga las 11 categorías iniciales del sistema.
-- 83 pruebas automatizadas: autenticación, modelo de categorías, API, aislamiento y seed.
+- Modelo `Transaction` con monto decimal, restricción de positividad en base de datos e índices para los listados por usuario, fecha y tipo.
+- CRUD de movimientos bajo `/api/v1/transactions/` con validación de pertenencia de la categoría, coherencia de tipos, filtros por fecha, tipo y categoría, orden por fecha, monto o creación, y paginación con tamaño ajustable.
+- 155 pruebas automatizadas: autenticación, modelos, API, aislamiento entre cuentas, filtros, paginación e integración entre módulos.
 
 **Frontend**
 
@@ -164,7 +168,7 @@ El Sprint 1 dejó el ciclo de autenticación funcionando de punta a punta. El Sp
 - Contexto de autenticación con restauración silenciosa de la sesión al recargar.
 - Guardias de rutas públicas y privadas, y vistas de login, registro y dashboard.
 
-**Pendiente para los próximos sprints:** las apps de dominio (`categories`, `transactions`, `budgets`) y el dashboard con métricas y semáforos de presupuesto.
+**Pendiente para los próximos sprints:** la app de presupuestos (`budgets`) y el dashboard con métricas y semáforos de presupuesto.
 
 ## Licencia
 
