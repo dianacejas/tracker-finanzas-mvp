@@ -1,7 +1,7 @@
 # Tracker de Finanzas Personales
 
 ![CI](https://github.com/dianacejas/tracker-finanzas-mvp/actions/workflows/ci.yml/badge.svg)
-![Django](https://img.shields.io/badge/Django-5.0-092E20?style=flat&logo=django&logoColor=white)
+![Django](https://img.shields.io/badge/Django-5.2-092E20?style=flat&logo=django&logoColor=white)
 ![DRF](https://img.shields.io/badge/Django%20REST-Framework-ff1717?style=flat)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=black)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat&logo=vite&logoColor=white)
@@ -141,13 +141,13 @@ Cada push y cada pull request ejecuta ambos trabajos mediante GitHub Actions, de
 | Sprint | Objetivo | Estado |
 |---|---|---|
 | **Sprint 1** | Fundaciones, arquitectura y autenticación JWT segura | Completado |
-| **Sprint 2** | Núcleo financiero: categorías y CRUD de transacciones | En curso |
+| **Sprint 2** | Núcleo financiero: categorías y CRUD de transacciones | Completado |
 | **Sprint 3** | Métricas, presupuestos con semáforos y dashboard | Pendiente |
 | **Sprint 4** | Tests de calidad, documentación OpenAPI, Docker y deploy | Pendiente |
 
 ## Estado actual
 
-El Sprint 1 dejó el ciclo de autenticación funcionando de punta a punta. El Sprint 2 avanza con el núcleo financiero: categorías y movimientos ya están operativos en la API.
+El Sprint 1 dejó el ciclo de autenticación funcionando de punta a punta. El Sprint 2 completó el núcleo financiero: categorías y movimientos ya están operativos en la API.
 
 **Backend**
 
