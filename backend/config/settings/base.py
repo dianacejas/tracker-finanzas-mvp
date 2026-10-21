@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     # Apps del proyecto
     "apps.users",
     "apps.categories",
+    "apps.transactions",
 ]
 
 MIDDLEWARE = [
@@ -127,6 +128,15 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+}
+
+# drf-spectacular: ambos modelos definen un campo `type`, así que hay que
+# nombrar los enums de forma explícita para que no colisionen en el esquema.
+SPECTACULAR_SETTINGS = {
+    "ENUM_NAME_OVERRIDES": {
+        "CategoryTypeEnum": "apps.categories.models.Category.Type",
+        "TransactionTypeEnum": "apps.transactions.models.Transaction.Type",
+    },
 }
 
 
