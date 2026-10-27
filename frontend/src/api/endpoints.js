@@ -6,3 +6,7 @@ export const AUTH_ENDPOINTS = {
   register: "/auth/register/",
   me: "/auth/me/",
 };
+
+export const CATEGORIES = "/categories/";
+export const TRANSACTIONS = "/transactions/";
+
