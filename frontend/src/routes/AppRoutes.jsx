@@ -5,6 +5,7 @@ import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
 import NotFound from "../pages/NotFound";
 import Register from "../pages/Register";
+import TransactionsPage from "../pages/TransactionsPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { PublicRoute } from "./PublicRoute";
 
@@ -26,6 +27,7 @@ export function AppRoutes() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/transactions" element={<TransactionsPage />} />
         </Route>
       </Route>
 
