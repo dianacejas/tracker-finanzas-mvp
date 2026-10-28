@@ -1,6 +1,7 @@
 import api from "./axios";
+import { TRANSACTIONS } from "./endpoints";
 
-const TRANSACTIONS_URL = "/transactions/";
+const TRANSACTIONS_URL = TRANSACTIONS || "/transactions/";
 
 /**
  * Obtiene transacciones paginadas con filtros opcionales
