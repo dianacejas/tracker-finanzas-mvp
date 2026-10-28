@@ -10,6 +10,8 @@ from django.urls import include, path
 #   apps.budgets      -> /api/v1/budgets/...
 api_v1_urlpatterns = [
     path("auth/", include("apps.users.urls")),
+    path("categories/", include("apps.categories.urls")),
+    path("transactions/", include("apps.transactions.urls")),
 ]
 
 urlpatterns = [

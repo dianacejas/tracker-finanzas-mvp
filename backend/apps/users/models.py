@@ -33,3 +33,21 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    def delete(self, *args, **kwargs):
+        """Elimina la cuenta junto con sus movimientos y categorías privadas.
+
+        Las transacciones protegen a su categoría con `on_delete=PROTECT`, para
+        que nadie borre por accidente una categoría que tiene movimientos
+        asociados. Ese mismo mecanismo impediría borrar la cuenta: Django
+        aborta la operación al encontrar la categoría privada protegida.
+
+        Por eso los movimientos del usuario se retiran antes de delegar en
+        Django. Así al eliminar la cuenta desaparecen sus transacciones y sus
+        categorías privadas, y las categorías globales del sistema quedan
+        intactas.
+        """
+        from apps.transactions.models import Transaction
+
+        Transaction.objects.filter(user=self).delete()
+        return super().delete(*args, **kwargs)
