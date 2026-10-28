@@ -14,8 +14,8 @@ User = get_user_model()
 
 class BudgetApiTests(APITestCase):
     def setUp(self):
-        self.user_a = User.objects.create_user(email="a@example.com", password="pass12345")
-        self.user_b = User.objects.create_user(email="b@example.com", password="pass12345")
+        self.user_a = User.objects.create_user(username="user_a", email="a@example.com", password="pass12345")
+        self.user_b = User.objects.create_user(username="user_b", email="b@example.com", password="pass12345")
         self.cat_a = Category.objects.create(name="Comida", type=Category.Type.EXPENSE, user=self.user_a)
         self.cat_b = Category.objects.create(name="Comida B", type=Category.Type.EXPENSE, user=self.user_b)
         self.cat_inc = Category.objects.create(name="Sueldo", type=Category.Type.INCOME, user=self.user_a)

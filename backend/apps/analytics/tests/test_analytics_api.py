@@ -14,10 +14,18 @@ User = get_user_model()
 class AnalyticsApiTests(APITestCase):
     def setUp(self):
         self.user_a = User.objects.create_user(
-            email="a@example.com", password="pass12345", first_name="A", last_name="Test"
+            username="user_a",
+            email="a@example.com",
+            password="pass12345",
+            first_name="A",
+            last_name="Test",
         )
         self.user_b = User.objects.create_user(
-            email="b@example.com", password="pass12345", first_name="B", last_name="Test"
+            username="user_b",
+            email="b@example.com",
+            password="pass12345",
+            first_name="B",
+            last_name="Test",
         )
         self.cat_exp_a = Category.objects.create(name="Comida A", type=Category.Type.EXPENSE, user=self.user_a)
         self.cat_inc_a = Category.objects.create(name="Sueldo A", type=Category.Type.INCOME, user=self.user_a)

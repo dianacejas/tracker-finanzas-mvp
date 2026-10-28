@@ -48,7 +48,7 @@ def get_financial_summary(user, start_date=None, end_date=None):
     total_expense = result.get("total_expense") or Decimal("0.00")
     net_savings = total_income - total_expense
 
-    if total_income > 0:
+    if total_income > 0 and net_savings > 0:
         savings_rate = (net_savings / total_income * Decimal("100")).quantize(Decimal("0.01"))
     else:
         savings_rate = Decimal("0.00")

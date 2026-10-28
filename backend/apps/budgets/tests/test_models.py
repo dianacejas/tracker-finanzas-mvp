@@ -14,7 +14,7 @@ User = get_user_model()
 
 class BudgetModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email="t@example.com", password="pass12345")
+        self.user = User.objects.create_user(username="user_t", email="t@example.com", password="pass12345")
         self.cat = Category.objects.create(name="Comida", type=Category.Type.EXPENSE, user=self.user)
 
     def test_amount_positive_constraint(self):
