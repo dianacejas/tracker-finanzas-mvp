@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "../layouts/AppLayout";
 import Dashboard from "../pages/Dashboard";
-import Login from "../pages/Login";
+import LoginPage from "../pages/LoginPage";
 import NotFound from "../pages/NotFound";
 import Register from "../pages/Register";
 import TransactionsPage from "../pages/TransactionsPage";
@@ -20,7 +20,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<PublicRoute />}>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<Register />} />
       </Route>
 
