@@ -2,16 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-app-light: #f7ece1;
+  --bg-surface-light: #ffffff;
+  --bg-app-dark: #242038;
+  --bg-surface-dark: #1c182d;
+  --text-primary-light: #242038;
+  --text-muted-light: #8d86c9;
+  --text-primary-dark: #f7ece1;
+  --text-muted-dark: #cac4ce;
+  --brand: #9067c6;
+  --border-muted: #cac4ce;
+}
+
 @layer base {
   html {
     @apply antialiased;
+    font-feature-settings: "tnum";
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  html:not(.dark) {
+    background-color: #f7ece1;
+  }
+
+  html.dark {
+    background-color: #242038;
   }
 
   body {
-    @apply min-h-screen bg-neutral-950 text-neutral-100;
+    @apply min-h-screen bg-transparent;
   }
 
   #root {
-    @apply min-h-screen;
+    @apply min-h-screen bg-transparent;
   }
 }
