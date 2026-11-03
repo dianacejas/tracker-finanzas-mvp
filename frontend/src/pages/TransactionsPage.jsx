@@ -11,7 +11,8 @@ import {
   Tag,
   ArrowLeftRight
 } from 'lucide-react';
-import { Select, SelectItem, DatePicker } from "@heroui/react";
+import { Select } from "@heroui/react";
+import { DatePicker } from "@heroui/react";
 import { getLocalTimeZone, today } from "@internationalized/date";
 
 export default function TransactionsPage() {
@@ -184,9 +185,9 @@ export default function TransactionsPage() {
             }}
             popoverProps={{ className: "z-[100]" }}
           >
-            <SelectItem key="date-desc">Más recientes primero</SelectItem>
-            <SelectItem key="amount-desc">Mayor monto</SelectItem>
-            <SelectItem key="amount-asc">Menor monto</SelectItem>
+            <Select.Item key="date-desc">Más recientes primero</Select.Item>
+            <Select.Item key="amount-desc">Mayor monto</Select.Item>
+            <Select.Item key="amount-asc">Menor monto</Select.Item>
           </Select>
         </div>
 
@@ -354,13 +355,13 @@ export default function TransactionsPage() {
                     }}
                     popoverProps={{ className: "z-[110]" }}
                   >
-                    <SelectItem key="Alimentación">Alimentación</SelectItem>
-                    <SelectItem key="Transporte">Transporte</SelectItem>
-                    <SelectItem key="Servicios">Servicios</SelectItem>
-                    <SelectItem key="Ocio">Ocio</SelectItem>
-                    <SelectItem key="Salud">Salud</SelectItem>
-                    <SelectItem key="Ingresos">Ingresos / Salario</SelectItem>
-                    <SelectItem key="Otros">Otros</SelectItem>
+                    <Select.Item key="Alimentación">Alimentación</Select.Item>
+                    <Select.Item key="Transporte">Transporte</Select.Item>
+                    <Select.Item key="Servicios">Servicios</Select.Item>
+                    <Select.Item key="Ocio">Ocio</Select.Item>
+                    <Select.Item key="Salud">Salud</Select.Item>
+                    <Select.Item key="Ingresos">Ingresos / Salario</Select.Item>
+                    <Select.Item key="Otros">Otros</Select.Item>
                   </Select>
                 </div>
 

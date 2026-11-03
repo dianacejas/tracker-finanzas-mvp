@@ -9,7 +9,7 @@ import {
   X,
   DollarSign
 } from 'lucide-react';
-import { Select, SelectItem } from "@heroui/react";
+import { Select } from "@heroui/react";
 
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState([
@@ -247,13 +247,13 @@ export default function BudgetsPage() {
                   }}
                   popoverProps={{ className: "z-[110]" }}
                 >
-                  <SelectItem key="Alimentación">Alimentación</SelectItem>
-                  <SelectItem key="Servicios e Internet">Servicios e Internet</SelectItem>
-                  <SelectItem key="Transporte">Transporte</SelectItem>
-                  <SelectItem key="Ocio y Salidas">Ocio y Salidas</SelectItem>
-                  <SelectItem key="Salud y Farmacia">Salud y Farmacia</SelectItem>
-                  <SelectItem key="Educación">Educación</SelectItem>
-                  <SelectItem key="Otros">Otros</SelectItem>
+                  <Select.Item key="Alimentación">Alimentación</Select.Item>
+                  <Select.Item key="Servicios e Internet">Servicios e Internet</Select.Item>
+                  <Select.Item key="Transporte">Transporte</Select.Item>
+                  <Select.Item key="Ocio y Salidas">Ocio y Salidas</Select.Item>
+                  <Select.Item key="Salud y Farmacia">Salud y Farmacia</Select.Item>
+                  <Select.Item key="Educación">Educación</Select.Item>
+                  <Select.Item key="Otros">Otros</Select.Item>
                 </Select>
               </div>
 
