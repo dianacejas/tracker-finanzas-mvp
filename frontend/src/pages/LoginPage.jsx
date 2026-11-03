@@ -42,7 +42,13 @@ export default function LoginPage() {
       await login(email.trim(), password);
       navigate('/dashboard');
     } catch (err) {
-      setErrorMessage(extractApiError(err, 'Credenciales incorrectas'));
+      if (err.name === 'TypeError' && err.message?.toLowerCase().includes('fetch')) {
+        setErrorMessage('No se pudo conectar con el servidor. Verifica que Django esté corriendo en el puerto 8000.');
+      } else if (!err?.response) {
+        setErrorMessage('No se pudo conectar con el servidor. Verifica que Django esté corriendo en el puerto 8000.');
+      } else {
+        setErrorMessage(extractApiError(err, 'Credenciales incorrectas'));
+      }
     } finally {
       setIsLoading(false);
     }
