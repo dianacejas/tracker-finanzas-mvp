@@ -8,8 +8,11 @@ import {
   Trash2, 
   X,
   Calendar,
-  Tag
+  Tag,
+  ArrowLeftRight
 } from 'lucide-react';
+import { Select, SelectItem, DatePicker } from "@heroui/react";
+import { getLocalTimeZone, today } from "@internationalized/date";
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([
@@ -33,7 +36,7 @@ export default function TransactionsPage() {
   const [newAmount, setNewAmount] = useState('');
   const [newCategory, setNewCategory] = useState('Alimentación');
   const [newType, setNewType] = useState('expense');
-  const [newDate, setNewDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(today(getLocalTimeZone()));
 
   // Filtrado y ordenamiento en memoria
   const filteredTransactions = useMemo(() => {
@@ -62,12 +65,14 @@ export default function TransactionsPage() {
     const val = parseFloat(newAmount);
     if (!newTitle || isNaN(val) || val <= 0) return;
 
+    const formattedDate = selectedDate ? selectedDate.toString() : new Date().toISOString().split('T')[0];
+
     const newTx = {
       id: Date.now(),
       title: newTitle,
       category: newCategory,
       amount: newType === 'expense' ? -val : val,
-      date: newDate,
+      date: formattedDate,
       type: newType,
     };
 
@@ -77,25 +82,36 @@ export default function TransactionsPage() {
     setNewAmount('');
     setNewCategory('Alimentación');
     setNewType('expense');
+    setSelectedDate(today(getLocalTimeZone()));
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 font-['Inter'] transition-colors duration-300">
       
       {/* Cabecera y Botón Nuevo */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#cac4ce]/40 dark:border-white/10">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#242038] dark:text-[#f7ece1] tracking-tight">
-            Transacciones
-          </h1>
-          <p className="text-xs sm:text-sm text-[#8d86c9] dark:text-[#cac4ce] mt-1 font-medium">
-            Historial detallado y gestión de todos tus ingresos y gastos
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#cac4ce]/40 dark:border-white/10">
+        <div className="flex items-center gap-3.5">
+          <div className="p-2.5 rounded-2xl bg-[#9067c6]/10 text-[#9067c6] border border-[#9067c6]/20">
+            <ArrowLeftRight className="w-6 h-6"/>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#242038] dark:text-[#f7ece1] tracking-tight">
+                Transacciones
+              </h1>
+              <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#9067c6]/10 text-[#9067c6] border border-[#9067c6]/20">
+                Noviembre 2026
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-[#8d86c9] dark:text-[#cac4ce] font-medium mt-0.5">
+              Historial detallado y gestión de todos tus ingresos y gastos
+            </p>
+          </div>
         </div>
 
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-sm font-semibold shadow-md shadow-[#9067c6]/20 transition-all hover:scale-[1.02] cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#9067c6]/20 transition-all hover:scale-[1.02] cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4"/>
           Nueva Transacción
@@ -154,15 +170,24 @@ export default function TransactionsPage() {
           </div>
 
           {/* Selector de Orden */}
-          <select
-            value={sortBy}
+          <Select
+            label="Ordenar por"
+            selectedKeys={[sortBy]}
             onChange={(e) => setSortBy(e.target.value)}
-            className="h-11 px-3 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] text-xs font-medium focus:outline-none focus:border-[#9067c6] transition-colors cursor-pointer"
+            size="sm"
+            className="w-48"
+            classNames={{
+              trigger: "h-11 bg-[#fdfbf9] dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 rounded-xl text-xs",
+              label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
+              value: "text-[#242038] dark:text-[#f7ece1]",
+              popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[100]",
+            }}
+            popoverProps={{ className: "z-[100]" }}
           >
-            <option value="date-desc">Más recientes primero</option>
-            <option value="amount-desc">Mayor monto</option>
-            <option value="amount-asc">Menor monto</option>
-          </select>
+            <SelectItem key="date-desc">Más recientes primero</SelectItem>
+            <SelectItem key="amount-desc">Mayor monto</SelectItem>
+            <SelectItem key="amount-asc">Menor monto</SelectItem>
+          </Select>
         </div>
 
       </div>
@@ -292,6 +317,7 @@ export default function TransactionsPage() {
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   required
                   placeholder="0.00"
                   value={newAmount}
@@ -314,29 +340,43 @@ export default function TransactionsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-[#242038] dark:text-[#cac4ce] block mb-1">Categoría</label>
-                  <select
-                    value={newCategory}
+                  <Select
+                    label="Categoría"
+                    placeholder="Selecciona una categoría"
+                    selectedKeys={[newCategory]}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] text-xs font-medium focus:outline-none focus:border-[#9067c6] transition-colors cursor-pointer"
+                    size="sm"
+                    classNames={{
+                      trigger: "h-11 bg-[#fdfbf9] dark:bg-black/25 border border-[#cac4ce] dark:border-white/15 rounded-xl",
+                      label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
+                      value: "text-[#242038] dark:text-[#f7ece1] text-sm",
+                      popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[110]",
+                    }}
+                    popoverProps={{ className: "z-[110]" }}
                   >
-                    <option value="Alimentación">Alimentación</option>
-                    <option value="Transporte">Transporte</option>
-                    <option value="Servicios">Servicios</option>
-                    <option value="Ocio">Ocio</option>
-                    <option value="Salud">Salud</option>
-                    <option value="Ingresos">Ingresos</option>
-                    <option value="Otros">Otros</option>
-                  </select>
+                    <SelectItem key="Alimentación">Alimentación</SelectItem>
+                    <SelectItem key="Transporte">Transporte</SelectItem>
+                    <SelectItem key="Servicios">Servicios</SelectItem>
+                    <SelectItem key="Ocio">Ocio</SelectItem>
+                    <SelectItem key="Salud">Salud</SelectItem>
+                    <SelectItem key="Ingresos">Ingresos / Salario</SelectItem>
+                    <SelectItem key="Otros">Otros</SelectItem>
+                  </Select>
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-[#242038] dark:text-[#cac4ce] block mb-1">Fecha</label>
-                  <input
-                    type="date"
-                    value={newDate}
-                    onChange={(e) => setNewDate(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] text-xs font-medium focus:outline-none focus:border-[#9067c6] transition-colors"
+                <div className="flex flex-col gap-1">
+                  <DatePicker
+                    label="Fecha"
+                    value={selectedDate}
+                    onChange={setSelectedDate}
+                    variant="bordered"
+                    classNames={{
+                      base: "w-full",
+                      label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce] -mb-1",
+                      inputWrapper: "h-11 rounded-xl border border-slate-200 dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 hover:border-slate-300 dark:hover:border-white/25 focus-within:border-[#9067c6] dark:focus-within:border-[#9067c6] transition-colors shadow-none",
+                      input: "text-sm text-[#242038] dark:text-[#f7ece1]",
+                      selectorButton: "text-[#8d86c9] dark:text-[#cac4ce]/60",
+                    }}
                   />
                 </div>
               </div>

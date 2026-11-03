@@ -9,6 +9,7 @@ import {
   X,
   DollarSign
 } from 'lucide-react';
+import { Select, SelectItem } from "@heroui/react";
 
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState([
@@ -63,19 +64,29 @@ export default function BudgetsPage() {
     <div className="w-full max-w-7xl mx-auto space-y-8 font-['Inter'] transition-colors duration-300">
       
       {/* Cabecera y Acción Principal */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#cac4ce]/40 dark:border-white/10">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#242038] dark:text-[#f7ece1] tracking-tight">
-            Presupuestos
-          </h1>
-          <p className="text-xs sm:text-sm text-[#8d86c9] dark:text-[#cac4ce] mt-1 font-medium">
-            Planifica tus techos de gasto por categoría y mantén tus ahorros a salvo
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#cac4ce]/40 dark:border-white/10">
+        <div className="flex items-center gap-3.5">
+          <div className="p-2.5 rounded-2xl bg-[#9067c6]/10 text-[#9067c6] border border-[#9067c6]/20">
+            <PieChart className="w-6 h-6"/>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#242038] dark:text-[#f7ece1] tracking-tight">
+                Presupuestos
+              </h1>
+              <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#9067c6]/10 text-[#9067c6] border border-[#9067c6]/20">
+                Noviembre 2026
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-[#8d86c9] dark:text-[#cac4ce] font-medium mt-0.5">
+              Planifica tus techos de gasto por categoría y mantén tus ahorros a salvo
+            </p>
+          </div>
         </div>
 
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-sm font-semibold shadow-md shadow-[#9067c6]/20 transition-all hover:scale-[1.02] cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#9067c6]/20 transition-all hover:scale-[1.02] cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4"/>
           Nuevo Presupuesto
@@ -222,22 +233,28 @@ export default function BudgetsPage() {
 
             <form onSubmit={handleCreateBudget} className="flex flex-col gap-4">
               <div>
-                <label className="text-xs font-semibold text-[#242038] dark:text-[#cac4ce] block mb-1">
-                  Categoría
-                </label>
-                <select
-                  value={newCategory}
+                <Select
+                  label="Categoría"
+                  placeholder="Selecciona una categoría"
+                  selectedKeys={[newCategory]}
                   onChange={(e) => setNewCategory(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] text-sm font-medium focus:outline-none focus:border-[#9067c6] transition-colors cursor-pointer"
+                  size="sm"
+                  classNames={{
+                    trigger: "h-11 bg-[#fdfbf9] dark:bg-black/25 border border-[#cac4ce] dark:border-white/15 rounded-xl",
+                    label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
+                    value: "text-[#242038] dark:text-[#f7ece1] text-sm",
+                    popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[110]",
+                  }}
+                  popoverProps={{ className: "z-[110]" }}
                 >
-                  <option value="Alimentación">Alimentación</option>
-                  <option value="Servicios e Internet">Servicios e Internet</option>
-                  <option value="Transporte">Transporte</option>
-                  <option value="Ocio y Salidas">Ocio y Salidas</option>
-                  <option value="Salud y Farmacia">Salud y Farmacia</option>
-                  <option value="Educación">Educación</option>
-                  <option value="Otros">Otros</option>
-                </select>
+                  <SelectItem key="Alimentación">Alimentación</SelectItem>
+                  <SelectItem key="Servicios e Internet">Servicios e Internet</SelectItem>
+                  <SelectItem key="Transporte">Transporte</SelectItem>
+                  <SelectItem key="Ocio y Salidas">Ocio y Salidas</SelectItem>
+                  <SelectItem key="Salud y Farmacia">Salud y Farmacia</SelectItem>
+                  <SelectItem key="Educación">Educación</SelectItem>
+                  <SelectItem key="Otros">Otros</SelectItem>
+                </Select>
               </div>
 
               <div>
@@ -247,7 +264,8 @@ export default function BudgetsPage() {
                 <div className="relative flex items-center">
                   <input
                     type="number"
-                    step="1"
+                    step="0.01"
+                    min="0"
                     required
                     placeholder="Ej. 300"
                     value={newLimit}
