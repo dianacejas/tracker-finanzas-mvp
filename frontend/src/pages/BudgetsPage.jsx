@@ -9,6 +9,7 @@ import {
   X,
   DollarSign
 } from 'lucide-react';
+import { Select } from "@heroui/react";
 
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState([
@@ -232,22 +233,32 @@ export default function BudgetsPage() {
 
             <form onSubmit={handleCreateBudget} className="flex flex-col gap-4">
               <div>
-                <label className="text-xs font-semibold text-[#242038] dark:text-[#cac4ce] block mb-1">
-                  Categoría
-                </label>
-                <select
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] text-sm font-medium focus:outline-none focus:border-[#9067c6] transition-colors cursor-pointer"
+                <Select
+                  label="Categoría"
+                  placeholder="Selecciona una categoría"
+                  selectedKeys={new Set([newCategory])}
+                  onSelectionChange={(keys) => {
+                    const value = Array.from(keys)[0];
+                    if (value) setNewCategory(value);
+                  }}
+                  variant="bordered"
+                  size="sm"
+                  popoverProps={{ className: "z-[150]" }}
+                  classNames={{
+                    trigger: "h-11 bg-[#fdfbf9] dark:bg-black/25 border border-[#cac4ce] dark:border-white/15 rounded-xl text-[#242038] dark:text-[#f7ece1]",
+                    label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
+                    value: "text-sm text-[#242038] dark:text-[#f7ece1]",
+                    popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+                  }}
                 >
-                  <option value="Alimentación">Alimentación</option>
-                  <option value="Servicios e Internet">Servicios e Internet</option>
-                  <option value="Transporte">Transporte</option>
-                  <option value="Ocio y Salidas">Ocio y Salidas</option>
-                  <option value="Salud y Farmacia">Salud y Farmacia</option>
-                  <option value="Educación">Educación</option>
-                  <option value="Otros">Otros</option>
-                </select>
+                  <Select.Item key="Alimentación" textValue="Alimentación">Alimentación</Select.Item>
+                  <Select.Item key="Servicios e Internet" textValue="Servicios e Internet">Servicios e Internet</Select.Item>
+                  <Select.Item key="Transporte" textValue="Transporte">Transporte</Select.Item>
+                  <Select.Item key="Ocio y Salidas" textValue="Ocio y Salidas">Ocio y Salidas</Select.Item>
+                  <Select.Item key="Salud y Farmacia" textValue="Salud y Farmacia">Salud y Farmacia</Select.Item>
+                  <Select.Item key="Educación" textValue="Educación">Educación</Select.Item>
+                  <Select.Item key="Otros" textValue="Otros">Otros</Select.Item>
+                </Select>
               </div>
 
               <div>

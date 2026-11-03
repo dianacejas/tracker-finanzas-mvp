@@ -24,6 +24,7 @@ import { AuthContext } from "./authContextObject";
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasToken] = useState(() => Boolean(localStorage.getItem('access_token')));
 
   const clearSession = useCallback(() => {
     clearAccessToken();
@@ -112,13 +113,13 @@ export function AuthProvider({ children }) {
     () => ({
       user,
       loading,
-      isAuthenticated: Boolean(user),
+      isAuthenticated: Boolean(user) || hasToken,
       login,
       register,
       logout,
       updateProfile,
     }),
-    [user, loading, login, register, logout, updateProfile]
+    [user, loading, hasToken, login, register, logout, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

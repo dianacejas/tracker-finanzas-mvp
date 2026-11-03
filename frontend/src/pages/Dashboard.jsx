@@ -10,7 +10,7 @@ import {
   X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { DatePicker } from "@heroui/react";
+import { Select, DatePicker } from "@heroui/react";
 import { getLocalTimeZone, today } from "@internationalized/date";
 
 const CATEGORIES = ['Alimentación', 'Transporte', 'Ocio', 'Servicios', 'Salud', 'Salario', 'Otros'];
@@ -333,20 +333,30 @@ export default function Dashboard() {
 
               {/* Categoría y Fecha */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[#242038] dark:text-[#cac4ce]">
-                    Categoría
-                  </label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    disabled={txType === 'income'}
-                    className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] text-sm focus:outline-none focus:border-[#9067c6] transition-colors disabled:opacity-50"
+                <div>
+                  <Select
+                    label="Categoría"
+                    placeholder="Selecciona una categoría"
+                    selectedKeys={txType === 'income' ? new Set(['Ingresos']) : new Set([category])}
+                    onSelectionChange={(keys) => {
+                      const value = Array.from(keys)[0];
+                      if (value && txType !== 'income') setCategory(value);
+                    }}
+                    isDisabled={txType === 'income'}
+                    variant="bordered"
+                    size="sm"
+                    popoverProps={{ className: "z-[150]" }}
+                    classNames={{
+                      trigger: "h-11 bg-[#fdfbf9] dark:bg-black/25 border border-slate-200 dark:border-white/15 rounded-xl",
+                      label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
+                      value: "text-sm text-[#242038] dark:text-[#f7ece1]",
+                      popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+                    }}
                   >
                     {CATEGORIES.filter(c => c !== 'Salario').map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <Select.Item key={cat} textValue={cat}>{cat}</Select.Item>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div className="flex flex-col gap-1">
                   <DatePicker
@@ -354,6 +364,7 @@ export default function Dashboard() {
                     value={selectedDate}
                     onChange={setSelectedDate}
                     variant="bordered"
+                    popoverProps={{ className: "z-[150]" }}
                     classNames={{
                       base: "w-full",
                       label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce] -mb-1",

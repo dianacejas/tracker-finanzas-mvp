@@ -11,8 +11,7 @@ import {
   Tag,
   ArrowLeftRight
 } from 'lucide-react';
-import { Select } from "@heroui/react";
-import { DatePicker } from "@heroui/react";
+import { Select, DatePicker } from "@heroui/react";
 import { getLocalTimeZone, today } from "@internationalized/date";
 
 export default function TransactionsPage() {
@@ -171,15 +170,28 @@ export default function TransactionsPage() {
           </div>
 
           {/* Selector de Orden */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="h-11 px-3 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] text-xs font-medium focus:outline-none focus:border-[#9067c6] transition-colors cursor-pointer"
+          <Select
+            label="Ordenar por"
+            selectedKeys={new Set([sortBy])}
+            onSelectionChange={(keys) => {
+              const value = Array.from(keys)[0];
+              if (value) setSortBy(value);
+            }}
+            variant="bordered"
+            size="sm"
+            className="w-52"
+            popoverProps={{ className: "z-[150]" }}
+            classNames={{
+              trigger: "h-11 bg-[#fdfbf9] dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 rounded-xl text-xs",
+              label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
+              value: "text-[#242038] dark:text-[#f7ece1]",
+              popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+            }}
           >
-            <option value="date-desc">Más recientes primero</option>
-            <option value="amount-desc">Mayor monto</option>
-            <option value="amount-asc">Menor monto</option>
-          </select>
+            <Select.Item key="date-desc" textValue="Más recientes primero">Más recientes primero</Select.Item>
+            <Select.Item key="amount-desc" textValue="Mayor monto">Mayor monto</Select.Item>
+            <Select.Item key="amount-asc" textValue="Menor monto">Menor monto</Select.Item>
+          </Select>
         </div>
 
       </div>
@@ -332,19 +344,32 @@ export default function TransactionsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] text-xs font-medium focus:outline-none focus:border-[#9067c6] transition-colors cursor-pointer"
+                  <Select
+                    label="Categoría"
+                    placeholder="Selecciona una categoría"
+                    selectedKeys={new Set([newCategory])}
+                    onSelectionChange={(keys) => {
+                      const value = Array.from(keys)[0];
+                      if (value) setNewCategory(value);
+                    }}
+                    variant="bordered"
+                    size="sm"
+                    popoverProps={{ className: "z-[150]" }}
+                    classNames={{
+                      trigger: "h-11 bg-[#fdfbf9] dark:bg-black/25 border border-[#cac4ce] dark:border-white/15 rounded-xl",
+                      label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
+                      value: "text-sm text-[#242038] dark:text-[#f7ece1]",
+                      popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+                    }}
                   >
-                    <option value="Alimentación">Alimentación</option>
-                    <option value="Transporte">Transporte</option>
-                    <option value="Servicios">Servicios</option>
-                    <option value="Ocio">Ocio</option>
-                    <option value="Salud">Salud</option>
-                    <option value="Ingresos">Ingresos / Salario</option>
-                    <option value="Otros">Otros</option>
-                  </select>
+                    <Select.Item key="Alimentación" textValue="Alimentación">Alimentación</Select.Item>
+                    <Select.Item key="Transporte" textValue="Transporte">Transporte</Select.Item>
+                    <Select.Item key="Servicios" textValue="Servicios">Servicios</Select.Item>
+                    <Select.Item key="Ocio" textValue="Ocio">Ocio</Select.Item>
+                    <Select.Item key="Salud" textValue="Salud">Salud</Select.Item>
+                    <Select.Item key="Ingresos" textValue="Ingresos / Salario">Ingresos / Salario</Select.Item>
+                    <Select.Item key="Otros" textValue="Otros">Otros</Select.Item>
+                  </Select>
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -353,6 +378,7 @@ export default function TransactionsPage() {
                     value={selectedDate}
                     onChange={setSelectedDate}
                     variant="bordered"
+                    popoverProps={{ className: "z-[150]" }}
                     classNames={{
                       base: "w-full",
                       label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce] -mb-1",
