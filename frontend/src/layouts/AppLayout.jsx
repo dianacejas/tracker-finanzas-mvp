@@ -49,9 +49,9 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7ece1] dark:bg-[#242038] text-[#242038] dark:text-[#f7ece1] transition-colors duration-300">
+    <div className="min-h-screen bg-[#faf8f6] dark:bg-[#242038] text-[#242038] dark:text-[#f7ece1] transition-colors duration-300">
       {/* Navbar */}
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-[#1c182d]/90 backdrop-blur-md border-b border-[#cac4ce]/50 dark:border-white/10">
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#1c182d]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-white/10">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           {/* Marca */}
           <div className="flex items-center gap-2.5">

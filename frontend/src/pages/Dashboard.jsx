@@ -10,6 +10,8 @@ import {
   X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { DatePicker } from "@heroui/react";
+import { getLocalTimeZone, today } from "@internationalized/date";
 
 const CATEGORIES = ['Alimentación', 'Transporte', 'Ocio', 'Servicios', 'Salud', 'Salario', 'Otros'];
 
@@ -39,7 +41,7 @@ export default function Dashboard() {
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Alimentación');
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(today(getLocalTimeZone()));
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => {
@@ -48,7 +50,7 @@ export default function Dashboard() {
     setAmount('');
     setCategory('Alimentación');
     setTxType('expense');
-    setDate(new Date().toISOString().split('T')[0]);
+    setSelectedDate(today(getLocalTimeZone()));
   };
 
   const handleAddTransaction = (e) => {
@@ -57,13 +59,14 @@ export default function Dashboard() {
     if (!title.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return;
 
     const finalAmount = txType === 'expense' ? -parsedAmount : parsedAmount;
+    const formattedDate = selectedDate ? selectedDate.toString() : 'Hoy';
 
     const newTx = {
       id: Date.now(),
       title: title.trim(),
       category: txType === 'income' ? 'Ingresos' : category,
       amount: finalAmount,
-      date: 'Hoy',
+      date: formattedDate,
     };
 
     setRecentTransactions([newTx, ...recentTransactions]);
@@ -80,7 +83,7 @@ export default function Dashboard() {
     <div className="w-full max-w-7xl mx-auto space-y-8 font-['Inter'] transition-colors duration-300 relative">
       
       {/* Cabecera y Acción Rápida */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#cac4ce]/40 dark:border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-white/10">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#242038] dark:text-[#f7ece1] tracking-tight">
             Panel General
@@ -103,7 +106,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         
         {/* Balance Total */}
-        <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-[#1c182d] border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-[0_2px_12px_rgba(36,32,56,0.04)] dark:shadow-none hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-bold tracking-wider text-[#8d86c9] dark:text-[#cac4ce] uppercase">
               Balance Total
@@ -121,7 +124,7 @@ export default function Dashboard() {
         </div>
 
         {/* Ingresos del Mes */}
-        <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-[#1c182d] border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-[0_2px_12px_rgba(36,32,56,0.04)] dark:shadow-none hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-bold tracking-wider text-[#8d86c9] dark:text-[#cac4ce] uppercase">
               Ingresos del Mes
@@ -139,7 +142,7 @@ export default function Dashboard() {
         </div>
 
         {/* Gastos del Mes */}
-        <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-[#1c182d] border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-[0_2px_12px_rgba(36,32,56,0.04)] dark:shadow-none hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-bold tracking-wider text-[#8d86c9] dark:text-[#cac4ce] uppercase">
               Gastos del Mes
@@ -162,7 +165,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Lista de Transacciones Recientes */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-white dark:bg-[#1c182d] border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-[0_2px_12px_rgba(36,32,56,0.04)] dark:shadow-none">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-base font-bold text-[#242038] dark:text-[#f7ece1]">
               Últimos Movimientos
@@ -172,7 +175,7 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          <div className="divide-y divide-[#cac4ce]/30 dark:divide-white/5">
+          <div className="divide-y divide-slate-200/70 dark:divide-white/5">
             {recentTransactions.map((tx) => (
               <div key={tx.id} className="py-3.5 flex items-center justify-between first:pt-0 last:pb-0">
                 <div className="flex items-center gap-3">
@@ -196,7 +199,7 @@ export default function Dashboard() {
                 <span className={`text-sm font-bold ${
                   tx.amount > 0 
                     ? 'text-emerald-600 dark:text-emerald-400' 
-                    : 'text-[#242038] dark:text-[#f7ece1]'
+                    : 'text-rose-600 dark:text-rose-400'
                 }`}>
                   {tx.amount > 0 ? '+' : ''}${Math.abs(tx.amount).toFixed(2)}
                 </span>
@@ -206,7 +209,7 @@ export default function Dashboard() {
         </div>
 
         {/* Resumen de Presupuestos */}
-        <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#1c182d] border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-[0_2px_12px_rgba(36,32,56,0.04)] dark:shadow-none flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-base font-bold text-[#242038] dark:text-[#f7ece1]">
@@ -253,8 +256,8 @@ export default function Dashboard() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={handleCloseModal}
           />
-          <div className="relative w-full max-w-md bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#cac4ce]/40 dark:border-white/10">
+          <div className="relative w-full max-w-md bg-white dark:bg-[#1c182d] border border-slate-200/80 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/80 dark:border-white/10">
               <h3 className="text-lg font-bold text-[#242038] dark:text-[#f7ece1]">
                 Nueva Transacción
               </h3>
@@ -268,7 +271,7 @@ export default function Dashboard() {
 
             <form onSubmit={handleAddTransaction} className="p-6 space-y-5">
               {/* Tipo */}
-              <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-black/25 border border-[#cac4ce]/40 dark:border-white/10">
+              <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-black/25 border border-slate-200/60 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setTxType('expense')}
@@ -308,7 +311,7 @@ export default function Dashboard() {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full h-11 pl-8 pr-4 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
+                    className="w-full h-11 pl-8 pr-4 rounded-xl border border-slate-200 dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-slate-400 dark:placeholder:text-[#cac4ce]/60 text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
                   />
                 </div>
               </div>
@@ -324,7 +327,7 @@ export default function Dashboard() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ej. Compra en supermercado"
-                  className="w-full h-11 px-4 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
+                  className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-slate-400 dark:placeholder:text-[#cac4ce]/60 text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
                 />
               </div>
 
@@ -338,22 +341,26 @@ export default function Dashboard() {
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     disabled={txType === 'income'}
-                    className="w-full h-11 px-3 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] text-sm focus:outline-none focus:border-[#9067c6] transition-colors disabled:opacity-50"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] text-sm focus:outline-none focus:border-[#9067c6] transition-colors disabled:opacity-50"
                   >
                     {CATEGORIES.filter(c => c !== 'Salario').map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[#242038] dark:text-[#cac4ce]">
-                    Fecha
-                  </label>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
+                <div className="flex flex-col gap-1">
+                  <DatePicker
+                    label="Fecha"
+                    value={selectedDate}
+                    onChange={setSelectedDate}
+                    variant="bordered"
+                    classNames={{
+                      base: "w-full",
+                      label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce] -mb-1",
+                      inputWrapper: "h-11 rounded-xl border border-slate-200 dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 hover:border-slate-300 dark:hover:border-white/25 focus-within:border-[#9067c6] dark:focus-within:border-[#9067c6] transition-colors shadow-none",
+                      input: "text-sm text-[#242038] dark:text-[#f7ece1]",
+                      selectorButton: "text-[#8d86c9] dark:text-[#cac4ce]/60",
+                    }}
                   />
                 </div>
               </div>
@@ -362,7 +369,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 h-11 rounded-xl border border-[#cac4ce] dark:border-white/15 text-[#242038] dark:text-[#f7ece1] text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                  className="flex-1 h-11 rounded-xl border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                 >
                   Cancelar
                 </button>
