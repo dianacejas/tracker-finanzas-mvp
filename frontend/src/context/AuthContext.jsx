@@ -42,22 +42,13 @@ export function AuthProvider({ children }) {
 
     async function bootstrap() {
       try {
-        // Evitar llamada si no hay refresh token en storage/localStorage
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-          if (!cancelled) {
-            clearSession();
-            setLoading(false);
-          }
-          return;
-        }
-
+        // Intentar restaurar sesión desde cookie HttpOnly vía refresh
         const access = await refreshRequest();
         if (cancelled) return;
         setAccessToken(access);
 
         const profile = await fetchProfileRequest();
-        if (!cancelied) {
+        if (!cancelled) {
           setUser(profile);
         }
       } catch {

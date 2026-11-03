@@ -306,12 +306,12 @@ export default function Dashboard() {
                   <input
                     type="number"
                     step="0.01"
-                    min="0.01"
+                    min="0"
                     required
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full h-11 pl-8 pr-4 rounded-xl border border-slate-200 dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-slate-400 dark:placeholder:text-[#cac4ce]/60 text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
+                    className="w-full h-11 pl-8 pr-4 rounded-xl border border-slate-200 dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-slate-400 dark:placeholder:text-[#cac4ce]/60 text-sm focus:outline-none focus:border-[#9067c6] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>
               </div>

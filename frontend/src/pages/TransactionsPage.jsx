@@ -171,24 +171,15 @@ export default function TransactionsPage() {
           </div>
 
           {/* Selector de Orden */}
-          <Select
-            label="Ordenar por"
-            selectedKeys={[sortBy]}
+          <select
+            value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            size="sm"
-            className="w-48"
-            classNames={{
-              trigger: "h-11 bg-[#fdfbf9] dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 rounded-xl text-xs",
-              label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
-              value: "text-[#242038] dark:text-[#f7ece1]",
-              popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[100]",
-            }}
-            popoverProps={{ className: "z-[100]" }}
+            className="h-11 px-3 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] text-xs font-medium focus:outline-none focus:border-[#9067c6] transition-colors cursor-pointer"
           >
-            <Select.Item key="date-desc">Más recientes primero</Select.Item>
-            <Select.Item key="amount-desc">Mayor monto</Select.Item>
-            <Select.Item key="amount-asc">Menor monto</Select.Item>
-          </Select>
+            <option value="date-desc">Más recientes primero</option>
+            <option value="amount-desc">Mayor monto</option>
+            <option value="amount-asc">Menor monto</option>
+          </select>
         </div>
 
       </div>
@@ -323,7 +314,7 @@ export default function TransactionsPage() {
                   placeholder="0.00"
                   value={newAmount}
                   onChange={(e) => setNewAmount(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
+                  className="w-full h-11 px-3.5 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
 
@@ -341,28 +332,19 @@ export default function TransactionsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Select
-                    label="Categoría"
-                    placeholder="Selecciona una categoría"
-                    selectedKeys={[newCategory]}
+                  <select
+                    value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    size="sm"
-                    classNames={{
-                      trigger: "h-11 bg-[#fdfbf9] dark:bg-black/25 border border-[#cac4ce] dark:border-white/15 rounded-xl",
-                      label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
-                      value: "text-[#242038] dark:text-[#f7ece1] text-sm",
-                      popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[110]",
-                    }}
-                    popoverProps={{ className: "z-[110]" }}
+                    className="w-full h-11 px-3 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] text-xs font-medium focus:outline-none focus:border-[#9067c6] transition-colors cursor-pointer"
                   >
-                    <Select.Item key="Alimentación">Alimentación</Select.Item>
-                    <Select.Item key="Transporte">Transporte</Select.Item>
-                    <Select.Item key="Servicios">Servicios</Select.Item>
-                    <Select.Item key="Ocio">Ocio</Select.Item>
-                    <Select.Item key="Salud">Salud</Select.Item>
-                    <Select.Item key="Ingresos">Ingresos / Salario</Select.Item>
-                    <Select.Item key="Otros">Otros</Select.Item>
-                  </Select>
+                    <option value="Alimentación">Alimentación</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Servicios">Servicios</option>
+                    <option value="Ocio">Ocio</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Ingresos">Ingresos / Salario</option>
+                    <option value="Otros">Otros</option>
+                  </select>
                 </div>
 
                 <div className="flex flex-col gap-1">

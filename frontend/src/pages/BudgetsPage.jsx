@@ -9,7 +9,6 @@ import {
   X,
   DollarSign
 } from 'lucide-react';
-import { Select } from "@heroui/react";
 
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState([
@@ -233,28 +232,22 @@ export default function BudgetsPage() {
 
             <form onSubmit={handleCreateBudget} className="flex flex-col gap-4">
               <div>
-                <Select
-                  label="Categoría"
-                  placeholder="Selecciona una categoría"
-                  selectedKeys={[newCategory]}
+                <label className="text-xs font-semibold text-[#242038] dark:text-[#cac4ce] block mb-1">
+                  Categoría
+                </label>
+                <select
+                  value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
-                  size="sm"
-                  classNames={{
-                    trigger: "h-11 bg-[#fdfbf9] dark:bg-black/25 border border-[#cac4ce] dark:border-white/15 rounded-xl",
-                    label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
-                    value: "text-[#242038] dark:text-[#f7ece1] text-sm",
-                    popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[110]",
-                  }}
-                  popoverProps={{ className: "z-[110]" }}
+                  className="w-full h-11 px-3.5 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] text-sm font-medium focus:outline-none focus:border-[#9067c6] transition-colors cursor-pointer"
                 >
-                  <Select.Item key="Alimentación">Alimentación</Select.Item>
-                  <Select.Item key="Servicios e Internet">Servicios e Internet</Select.Item>
-                  <Select.Item key="Transporte">Transporte</Select.Item>
-                  <Select.Item key="Ocio y Salidas">Ocio y Salidas</Select.Item>
-                  <Select.Item key="Salud y Farmacia">Salud y Farmacia</Select.Item>
-                  <Select.Item key="Educación">Educación</Select.Item>
-                  <Select.Item key="Otros">Otros</Select.Item>
-                </Select>
+                  <option value="Alimentación">Alimentación</option>
+                  <option value="Servicios e Internet">Servicios e Internet</option>
+                  <option value="Transporte">Transporte</option>
+                  <option value="Ocio y Salidas">Ocio y Salidas</option>
+                  <option value="Salud y Farmacia">Salud y Farmacia</option>
+                  <option value="Educación">Educación</option>
+                  <option value="Otros">Otros</option>
+                </select>
               </div>
 
               <div>
@@ -270,7 +263,7 @@ export default function BudgetsPage() {
                     placeholder="Ej. 300"
                     value={newLimit}
                     onChange={(e) => setNewLimit(e.target.value)}
-                    className="w-full h-11 pl-9 pr-3.5 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
+                    className="w-full h-11 pl-9 pr-3.5 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <DollarSign className="absolute left-3 w-4 h-4 text-[#8d86c9] dark:text-[#cac4ce]/60 pointer-events-none"/>
                 </div>
