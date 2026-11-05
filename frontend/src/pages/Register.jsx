@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Mail, User, Eye, EyeOff, Sun, Moon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import peshiLogo from '/peshi_logo_fin.png';
+import { useTheme } from '../context/ThemeContext';
+import { extractApiError, registerRequest } from '../api/authApi';
+import { registerSchema } from '../schemas/auth.schema';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -14,60 +17,37 @@ export default function Register() {
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return document.documentElement.classList.contains('dark') || 
-           localStorage.getItem('theme') === 'dark';
-  });
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDark]);
-
-  const toggleTheme = () => setIsDark((prev) => !prev);
+  const { mode, toggleMode } = useTheme();
+  const isDark = mode === 'dark';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
 
-    if (password !== confirmPassword) {
-      setErrorMessage('Las contraseñas no coinciden.');
+    const validation = registerSchema.safeParse({
+      username: name,
+      email,
+      password,
+      confirmPassword,
+    });
+
+    if (!validation.success) {
+      setErrorMessage(validation.error.errors[0]?.message || 'Datos de registro inválidos.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/v1/auth/register/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: name,
-          email,
-          password,
-        }),
+      await registerRequest({
+        username: validation.data.username,
+        email: validation.data.email,
+        password: validation.data.password,
       });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(
-          errData.detail || 
-          errData.email?.[0] || 
-          errData.username?.[0] || 
-          'Error al registrar la cuenta'
-        );
-      }
 
       navigate('/login');
     } catch (err) {
-      setErrorMessage(err.message || 'Error de conexión');
+      setErrorMessage(extractApiError(err, 'Error al registrar la cuenta'));
     } finally {
       setIsLoading(false);
     }
@@ -77,11 +57,11 @@ export default function Register() {
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-[#f7ece1] dark:bg-[#242038] font-['Inter'] transition-colors duration-300 relative">
       <button
         type="button"
-        onClick={toggleTheme}
+        onClick={toggleMode}
         className="absolute top-6 right-6 p-2.5 rounded-full bg-white dark:bg-[#242038]/80 border border-[#cac4ce] dark:border-white/10 text-[#242038] dark:text-[#f7ece1] shadow-md hover:scale-105 transition-all cursor-pointer"
         aria-label="Alternar tema"
       >
-        {isDark ? <Sun className="w-5 h-5 text-amber-300"/> : <Moon className="w-5 h-5 text-[#242038]"/>}
+        {isDark ? <Sun className="w-5 h-5 text-amber-300" /> : <Moon className="w-5 h-5 text-[#242038]" />}
       </button>
 
       <div className="flex flex-col items-center mb-6 text-center">
@@ -128,7 +108,7 @@ export default function Register() {
                 placeholder="tu_usuario"
                 className="w-full h-11 pl-4 pr-11 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
               />
-              <User className="absolute right-3.5 w-4 h-4 text-[#8d86c9] dark:text-[#cac4ce]/60 pointer-events-none"/>
+              <User className="absolute right-3.5 w-4 h-4 text-[#8d86c9] dark:text-[#cac4ce]/60 pointer-events-none" />
             </div>
           </div>
 
@@ -145,7 +125,7 @@ export default function Register() {
                 placeholder="tu@email.com"
                 className="w-full h-11 pl-4 pr-11 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
               />
-              <Mail className="absolute right-3.5 w-4 h-4 text-[#8d86c9] dark:text-[#cac4ce]/60 pointer-events-none"/>
+              <Mail className="absolute right-3.5 w-4 h-4 text-[#8d86c9] dark:text-[#cac4ce]/60 pointer-events-none" />
             </div>
           </div>
 
@@ -168,7 +148,7 @@ export default function Register() {
                 className="absolute right-3.5 text-[#8d86c9] hover:text-[#9067c6] dark:text-[#cac4ce]/60 dark:hover:text-white transition-colors cursor-pointer"
                 aria-label="Mostrar u ocultar contraseña"
               >
-                {showPassword ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -192,7 +172,7 @@ export default function Register() {
                 className="absolute right-3.5 text-[#8d86c9] hover:text-[#9067c6] dark:text-[#cac4ce]/60 dark:hover:text-white transition-colors cursor-pointer"
                 aria-label="Mostrar u ocultar confirmación de contraseña"
               >
-                {showConfirmPassword ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -213,6 +193,19 @@ export default function Register() {
           </p>
         </form>
       </div>
+
+      <footer className="mt-8 py-4 text-center text-xs text-[#8d86c9] dark:text-[#cac4ce]/70 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+        <Link className="hover:text-[#9067c6] dark:hover:text-white transition-colors cursor-pointer" to="/">
+          ← Volver a inicio
+        </Link>
+        <span className="hidden sm:inline text-slate-300 dark:text-white/10">•</span>
+        <span>© 2026 PESHITO</span>
+        <span className="hidden sm:inline text-slate-300 dark:text-white/10">•</span>
+        <div className="flex gap-4">
+          <a href="#" className="hover:text-[#9067c6] dark:hover:text-white transition-colors">Privacidad</a>
+          <a href="#" className="hover:text-[#9067c6] dark:hover:text-white transition-colors">Términos</a>
+        </div>
+      </footer>
     </div>
   );
 }
