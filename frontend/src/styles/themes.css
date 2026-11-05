@@ -1,0 +1,150 @@
+:root {
+  font-feature-settings: "tnum";
+  --color-primary: #454ade;
+  --color-primary-foreground: #ffffff;
+  --color-background: #f7f9fc;
+  --color-foreground: #1f2937;
+  --color-card: #ffffff;
+  --color-card-foreground: #1f2937;
+  --color-border: rgba(15, 23, 42, 0.08);
+  --color-muted: rgba(148, 163, 184, 0.12);
+  --color-success: #10b981;
+  --color-success-foreground: #ffffff;
+  --color-danger: #f43f5e;
+  --color-danger-foreground: #ffffff;
+  --color-accent: #b14aed;
+  --bg-app: #f7f9fc;
+  --bg-surface: #ffffff;
+  --bg-input: #ffffff;
+  --border-color: rgba(15, 23, 42, 0.08);
+  --brand-primary: #454ade;
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+}
+
+[data-theme="violet-magenta"] {
+  --color-primary: #454ade;
+  --brand-primary: #454ade;
+  --color-accent: #b14aed;
+  --color-background: #f7f6fa;
+  --bg-app: #f7f6fa;
+  --color-card: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-input: #ffffff;
+}
+
+[data-theme="periwinkle-amethyst"] {
+  --color-primary: #613dc1;
+  --brand-primary: #613dc1;
+  --color-accent: #858ae3;
+  --color-background: #f7f8ff;
+  --bg-app: #f7f8ff;
+  --color-card: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-input: #ffffff;
+}
+
+[data-theme="sage-yale-blue"] {
+  --color-primary: #344966;
+  --brand-primary: #344966;
+  --color-accent: #bfcc94;
+  --color-background: #f0f4ef;
+  --bg-app: #f0f4ef;
+  --color-card: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-input: #ffffff;
+}
+
+[data-theme="lilac-indigo"] {
+  --color-primary: #8661c1;
+  --brand-primary: #8661c1;
+  --color-accent: #efbcd5;
+  --color-background: #f7f5fb;
+  --bg-app: #f7f5fb;
+  --color-card: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-input: #ffffff;
+}
+
+[data-theme="cerulean-ink"] {
+  --color-primary: #007ea7;
+  --brand-primary: #007ea7;
+  --color-accent: #00a8e8;
+  --color-background: #f7fbff;
+  --bg-app: #f7fbff;
+  --color-card: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-input: #ffffff;
+}
+
+.dark {
+  --color-foreground: #f8fafc;
+  --color-card-foreground: #f8fafc;
+  --color-border: rgba(226, 232, 240, 0.12);
+  --border-color: rgba(226, 232, 240, 0.12);
+  --color-muted: rgba(148, 163, 184, 0.18);
+  --color-success: #34d399;
+  --color-danger: #fb7185;
+}
+
+.dark[data-theme="violet-magenta"] {
+  --color-background: #1b1f3b;
+  --bg-app: #1b1f3b;
+  --color-card: #24284f;
+  --bg-surface: #24284f;
+  --bg-input: #2a2f5a;
+  --brand-primary: #b14aed;
+}
+
+.dark[data-theme="periwinkle-amethyst"] {
+  --color-background: #2c0735;
+  --bg-app: #2c0735;
+  --color-card: #3a0f4a;
+  --bg-surface: #3a0f4a;
+  --bg-input: #431556;
+  --brand-primary: #858ae3;
+}
+
+.dark[data-theme="sage-yale-blue"] {
+  --color-background: #0d1821;
+  --bg-app: #0d1821;
+  --color-card: #16222f;
+  --bg-surface: #16222f;
+  --bg-input: #1d2b3d;
+  --brand-primary: #bfcc94;
+}
+
+.dark[data-theme="lilac-indigo"] {
+  --color-background: #2e294e;
+  --bg-app: #2e294e;
+  --color-card: #3a345f;
+  --bg-surface: #3a345f;
+  --bg-input: #433d6b;
+  --brand-primary: #be97c6;
+}
+
+.dark[data-theme="cerulean-ink"] {
+  --color-background: #00171f;
+  --bg-app: #00171f;
+  --color-card: #002a38;
+  --bg-surface: #002a38;
+  --bg-input: #00364a;
+  --brand-primary: #00a8e8;
+}
+
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--color-foreground);
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+}
+

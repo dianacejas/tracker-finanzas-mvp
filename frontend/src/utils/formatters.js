@@ -1,26 +1,24 @@
 /**
- * Formatea un monto a moneda legible
+ * Formatea un monto a moneda legible estandarizada con separadores de miles y decimales.
+ * Por defecto utiliza formato argentino (es-AR / ARS).
  * @param {number|string} amount
  * @param {string} currency
+ * @param {string} locale
  */
-export const formatCurrency = (amount, currency = "USD") => {
-  const numericAmount = typeof amount === "string" ? Number(amount) : Number(amount);
+export const formatCurrency = (amount, currency = "ARS", locale = "es-AR") => {
+  const numericAmount = typeof amount === "string" ? parseFloat(amount) : Number(amount);
+  const val = Number.isNaN(numericAmount) ? 0 : numericAmount;
 
-  if (Number.isNaN(numericAmount)) {
-    return new Intl.NumberFormat("es-ES", {
+  try {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(0);
+    }).format(val);
+  } catch {
+    return `$ ${val.toFixed(2)}`;
   }
-
-  return new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(numericAmount);
 };
 
 /**
@@ -29,7 +27,6 @@ export const formatCurrency = (amount, currency = "USD") => {
 export const formatDate = (dateString) => {
   if (!dateString) return "-";
 
-  // Intentar parseo directo para evitar desfases por zona horaria
   const parts = String(dateString).split("-");
   if (parts.length === 3) {
     const [year, month, day] = parts;
@@ -41,7 +38,7 @@ export const formatDate = (dateString) => {
     return dateString;
   }
 
-  return new Intl.DateTimeFormat("es-ES").format(date);
+  return new Intl.DateTimeFormat("es-AR").format(date);
 };
 
 export default {

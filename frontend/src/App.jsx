@@ -1,20 +1,28 @@
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, useHref, useNavigate } from "react-router-dom";
+import { HeroUIProvider } from "@heroui/react";
 
 import { AuthProvider } from "./context/AuthContext";
 import { AppRoutes } from "./routes/AppRoutes";
 
+function AppWithProviders() {
+  const navigate = useNavigate();
+
+  return (
+    <HeroUIProvider navigate={navigate} useHref={useHref}>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </HeroUIProvider>
+  );
+}
+
 /**
  * Raiz de la aplicacion.
- *
- * AuthProvider envuelve a las rutas para que cualquier componente pueda
- * consumir la sesion mediante useAuth, y BrowserRouter habilita la navegacion.
  */
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <AppWithProviders />
     </BrowserRouter>
   );
 }
