@@ -1,88 +1,208 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Search, 
-  Filter, 
   ArrowUpRight, 
   ArrowDownLeft, 
   Plus, 
   Trash2, 
   X,
-  Calendar,
-  Tag,
-  ArrowLeftRight
+  ArrowLeftRight,
+  AlertCircle
 } from 'lucide-react';
-import { Select, DatePicker } from "@heroui/react";
+import { 
+  Button, 
+  Input, 
+  Select, 
+  SelectItem, 
+  DatePicker 
+} from "@heroui/react";
 import { getLocalTimeZone, today } from "@internationalized/date";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getTransactions, createTransaction, deleteTransaction } from "../api/transactions.service";
+import { getCategories } from "../api/categories.service";
+import { extractApiError } from "../api/authApi";
+import { QUERY_KEYS } from "../api/queryKeys";
+import { transactionSchema } from "../schemas/transaction.schema";
+import { formatCurrency } from "../utils/formatters";
+import { useToast } from "../components/common/Toast";
+import { SkeletonTableRows } from "../components/common/Skeleton";
+import EmptyState from "../components/common/EmptyState";
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState([
-    { id: 1, title: 'Supermercado Central', category: 'Alimentación', amount: -85.20, date: '2026-11-01', type: 'expense' },
-    { id: 2, title: 'Pago de Salario', category: 'Ingresos', amount: 3200.00, date: '2026-10-31', type: 'income' },
-    { id: 3, title: 'Suscripción Streaming', category: 'Ocio', amount: -14.99, date: '2026-10-28', type: 'expense' },
-    { id: 4, title: 'Restaurante Peshi', category: 'Alimentación', amount: -42.00, date: '2026-10-26', type: 'expense' },
-    { id: 5, title: 'Combustible Shell', category: 'Transporte', amount: -55.00, date: '2026-10-24', type: 'expense' },
-    { id: 6, title: 'Venta de artículo usado', category: 'Ingresos', amount: 150.00, date: '2026-10-20', type: 'income' },
-    { id: 7, title: 'Farmacia y Medicinas', category: 'Salud', amount: -32.50, date: '2026-10-18', type: 'expense' },
-  ]);
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
 
-  // Filtros
+  // Paginación y Filtros
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all'); // 'all' | 'income' | 'expense'
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('date-desc'); // 'date-desc' | 'amount-desc' | 'amount-asc'
 
   // Modal de Nueva Transacción
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newAmount, setNewAmount] = useState('');
-  const [newCategory, setNewCategory] = useState('Alimentación');
-  const [newType, setNewType] = useState('expense');
-  const [selectedDate, setSelectedDate] = useState(today(getLocalTimeZone()));
+  const [newCategoryId, setNewCategoryId] = useState('');
+  const [newType, setNewType] = useState('expense'); // 'expense' | 'income'
+  const [selectedDate, setSelectedDate] = useState(() => today(getLocalTimeZone()));
+  const [modalError, setModalError] = useState('');
+  const [itemToDelete, setItemToDelete] = useState(null);
 
-  // Filtrado y ordenamiento en memoria
+  // Parámetros para la API
+  const queryParams = useMemo(() => {
+    const p = { page, page_size: pageSize };
+    if (selectedType !== 'all') {
+      p.type = selectedType.toUpperCase();
+    }
+    if (selectedCategory !== 'all') {
+      p.category = Number(selectedCategory);
+    }
+    return p;
+  }, [page, pageSize, selectedType, selectedCategory]);
+
+  // Consultas con TanStack Query
+  const {
+    data: txResponse,
+    isLoading: loading,
+    error: queryError,
+    refetch: loadTransactions,
+  } = useQuery({
+    queryKey: QUERY_KEYS.transactions(queryParams),
+    queryFn: () => getTransactions(queryParams),
+  });
+
+  const { data: rawCategories = [] } = useQuery({
+    queryKey: QUERY_KEYS.categories,
+    queryFn: getCategories,
+  });
+
+  const categories = useMemo(() => {
+    return Array.isArray(rawCategories) ? rawCategories : [];
+  }, [rawCategories]);
+
+  const transactions = useMemo(() => {
+    return Array.isArray(txResponse) ? txResponse : txResponse?.results || [];
+  }, [txResponse]);
+
+  const totalCount = useMemo(() => {
+    return Array.isArray(txResponse) ? txResponse.length : txResponse?.count || 0;
+  }, [txResponse]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const error = queryError ? extractApiError(queryError, "No se pudieron cargar las transacciones.") : null;
+
+  // Mutaciones
+  const createMutation = useMutation({
+    mutationFn: createTransaction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      addToast("Transacción registrada con éxito", "success");
+      setIsModalOpen(false);
+    },
+    onError: (err) => {
+      setModalError(extractApiError(err, "No se pudo guardar la transacción."));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteTransaction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      addToast("Transacción eliminada con éxito", "info");
+    },
+    onError: (err) => {
+      alert(extractApiError(err, "No se pudo eliminar la transacción."));
+    },
+  });
+
+  // Categorías filtradas por tipo para el modal
+  const eligibleCategories = useMemo(() => {
+    const requiredType = newType === 'income' ? 'INCOME' : 'EXPENSE';
+    return categories.filter(c => c.type === 'BOTH' || c.type === requiredType);
+  }, [categories, newType]);
+
+  const handleOpenModal = () => {
+    setModalError('');
+    setNewTitle('');
+    setNewAmount('');
+    setNewType('expense');
+    setSelectedDate(today(getLocalTimeZone()));
+
+    const initialEligible = categories.filter(c => c.type === 'BOTH' || c.type === 'EXPENSE');
+    setNewCategoryId(initialEligible.length > 0 ? String(initialEligible[0].id) : '');
+
+    setIsModalOpen(true);
+  };
+
+  const handleTypeChange = (type) => {
+    setNewType(type);
+    const requiredType = type === 'income' ? 'INCOME' : 'EXPENSE';
+    const nextEligible = categories.filter(c => c.type === 'BOTH' || c.type === requiredType);
+    setNewCategoryId(nextEligible.length > 0 ? String(nextEligible[0].id) : '');
+  };
+
+  // Filtrado y ordenamiento en cliente sobre la página actual
   const filteredTransactions = useMemo(() => {
     return transactions
       .filter((t) => {
+        const catName = t.category_detail?.name || '';
+        const desc = t.description || '';
         const matchesSearch = 
-          t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.category.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesType = selectedType === 'all' || t.type === selectedType;
-        return matchesSearch && matchesType;
+          desc.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          catName.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesSearch;
       })
       .sort((a, b) => {
         if (sortBy === 'date-desc') return new Date(b.date) - new Date(a.date);
-        if (sortBy === 'amount-desc') return Math.abs(b.amount) - Math.abs(a.amount);
-        if (sortBy === 'amount-asc') return Math.abs(a.amount) - Math.abs(b.amount);
+        if (sortBy === 'amount-desc') return Math.abs(Number(b.amount)) - Math.abs(Number(a.amount));
+        if (sortBy === 'amount-asc') return Math.abs(Number(a.amount)) - Math.abs(Number(b.amount));
         return 0;
       });
-  }, [transactions, searchTerm, selectedType, sortBy]);
+  }, [transactions, searchTerm, sortBy]);
+
+  const pageBalance = useMemo(() => {
+    return filteredTransactions.reduce((acc, curr) => {
+      const sign = curr.type === 'INCOME' ? 1 : -1;
+      return acc + (sign * Number(curr.amount || 0));
+    }, 0);
+  }, [filteredTransactions]);
 
   const handleDelete = (id) => {
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+    deleteMutation.mutate(id);
   };
 
   const handleCreate = (e) => {
     e.preventDefault();
+    setModalError('');
     const val = parseFloat(newAmount);
-    if (!newTitle || isNaN(val) || val <= 0) return;
+    const dateStr = selectedDate ? selectedDate.toString() : new Date().toISOString().split('T')[0];
 
-    const formattedDate = selectedDate ? selectedDate.toString() : new Date().toISOString().split('T')[0];
+    const validation = transactionSchema.safeParse({
+      amount: val,
+      category: Number(newCategoryId),
+      type: newType === 'income' ? 'INCOME' : 'EXPENSE',
+      date: dateStr,
+      description: newTitle,
+    });
 
-    const newTx = {
-      id: Date.now(),
-      title: newTitle,
-      category: newCategory,
-      amount: newType === 'expense' ? -val : val,
-      date: formattedDate,
-      type: newType,
-    };
+    if (!validation.success) {
+      setModalError(validation.error.errors[0]?.message || "Datos de transacción inválidos.");
+      return;
+    }
 
-    setTransactions([newTx, ...transactions]);
-    setIsModalOpen(false);
-    setNewTitle('');
-    setNewAmount('');
-    setNewCategory('Alimentación');
-    setNewType('expense');
-    setSelectedDate(today(getLocalTimeZone()));
+    createMutation.mutate({
+      amount: validation.data.amount.toFixed(2),
+      category: validation.data.category,
+      type: validation.data.type,
+      date: validation.data.date,
+      description: validation.data.description,
+    });
   };
 
   return (
@@ -100,193 +220,280 @@ export default function TransactionsPage() {
                 Transacciones
               </h1>
               <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#9067c6]/10 text-[#9067c6] border border-[#9067c6]/20">
-                Noviembre 2026
+                Historial Real
               </span>
             </div>
             <p className="text-xs sm:text-sm text-[#8d86c9] dark:text-[#cac4ce] font-medium mt-0.5">
-              Historial detallado y gestión de todos tus ingresos y gastos
+              Gestión centralizada de todos tus ingresos y egresos
             </p>
           </div>
         </div>
 
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#9067c6]/20 transition-all hover:scale-[1.02] cursor-pointer shrink-0"
+        <Button 
+          color="primary"
+          onPress={handleOpenModal}
+          className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer"
+          startContent={<Plus className="w-4 h-4" />}
         >
-          <Plus className="w-4 h-4"/>
           Nueva Transacción
-        </button>
+        </Button>
       </div>
 
+      {/* Alerta de Error de API */}
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center gap-3 text-sm">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <span>{error}</span>
+          <Button 
+            size="sm"
+            variant="light"
+            color="danger"
+            onPress={() => loadTransactions()}
+            className="ml-auto font-bold"
+          >
+            Reintentar
+          </Button>
+        </div>
+      )}
+
       {/* Barra de Filtros y Búsqueda */}
-      <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 bg-white dark:bg-[#1c182d] p-4 rounded-2xl border border-[#cac4ce]/60 dark:border-white/10 shadow-sm">
         
-        {/* Input Buscador */}
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Buscar por concepto o categoría..."
+        {/* Buscador */}
+        <div className="sm:col-span-5 relative">
+          <Input
+            placeholder="Buscar por descripción..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-11 pl-10 pr-4 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
+            startContent={<Search className="w-4 h-4 text-[#8d86c9] dark:text-[#cac4ce]/60" />}
+            size="sm"
+            variant="bordered"
+            classNames={{
+              inputWrapper: "h-10 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 focus-within:border-[#9067c6]",
+            }}
           />
-          <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-[#8d86c9] dark:text-[#cac4ce]/60 pointer-events-none"/>
         </div>
 
-        {/* Filtro Tipo y Orden */}
-        <div className="flex flex-wrap sm:flex-nowrap gap-2.5">
-          {/* Selector de Tipo */}
-          <div className="flex p-1 rounded-xl bg-slate-100 dark:bg-black/30 border border-[#cac4ce]/30 dark:border-white/5">
-            <button
-              onClick={() => setSelectedType('all')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                selectedType === 'all'
-                  ? 'bg-white dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] shadow-xs'
-                  : 'text-[#8d86c9] dark:text-[#cac4ce]'
-              }`}
-            >
-              Todos
-            </button>
-            <button
-              onClick={() => setSelectedType('income')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                selectedType === 'income'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-[#8d86c9] dark:text-[#cac4ce]'
-              }`}
-            >
-              Ingresos
-            </button>
-            <button
-              onClick={() => setSelectedType('expense')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                selectedType === 'expense'
-                  ? 'bg-rose-500 text-white shadow-xs'
-                  : 'text-[#8d86c9] dark:text-[#cac4ce]'
-              }`}
-            >
-              Gastos
-            </button>
-          </div>
-
-          {/* Selector de Orden */}
+        {/* Filtro por Categoría */}
+        <div className="sm:col-span-3">
           <Select
-            label="Ordenar por"
-            selectedKeys={new Set([sortBy])}
+            label="Categoría"
+            placeholder="Todas"
+            selectedKeys={new Set([selectedCategory])}
             onSelectionChange={(keys) => {
-              const value = Array.from(keys)[0];
-              if (value) setSortBy(value);
+              const val = Array.from(keys)[0];
+              if (val) {
+                setSelectedCategory(val);
+                setPage(1);
+              }
             }}
-            variant="bordered"
             size="sm"
-            className="w-52"
-            popoverProps={{ className: "z-[150]" }}
+            variant="bordered"
             classNames={{
-              trigger: "h-11 bg-[#fdfbf9] dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 rounded-xl text-xs",
-              label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
-              value: "text-[#242038] dark:text-[#f7ece1]",
+              trigger: "h-10 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25",
               popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
             }}
           >
-            <Select.Item key="date-desc" textValue="Más recientes primero">Más recientes primero</Select.Item>
-            <Select.Item key="amount-desc" textValue="Mayor monto">Mayor monto</Select.Item>
-            <Select.Item key="amount-asc" textValue="Menor monto">Menor monto</Select.Item>
+            <SelectItem key="all" textValue="Todas las categorías">Todas las categorías</SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={String(c.id)} textValue={c.name}>{c.name}</SelectItem>
+            ))}
           </Select>
         </div>
 
+        {/* Filtro por Tipo */}
+        <div className="sm:col-span-2">
+          <Select
+            label="Tipo"
+            placeholder="Todos"
+            selectedKeys={new Set([selectedType])}
+            onSelectionChange={(keys) => {
+              const val = Array.from(keys)[0];
+              if (val) {
+                setSelectedType(val);
+                setPage(1);
+              }
+            }}
+            size="sm"
+            variant="bordered"
+            classNames={{
+              trigger: "h-10 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25",
+              popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+            }}
+          >
+            <SelectItem key="all" textValue="Todos los tipos">Todos</SelectItem>
+            <SelectItem key="income" textValue="Ingresos">Ingresos</SelectItem>
+            <SelectItem key="expense" textValue="Gastos">Gastos</SelectItem>
+          </Select>
+        </div>
+
+        {/* Ordenamiento */}
+        <div className="sm:col-span-2">
+          <Select
+            label="Orden"
+            selectedKeys={new Set([sortBy])}
+            onSelectionChange={(keys) => {
+              const val = Array.from(keys)[0];
+              if (val) setSortBy(val);
+            }}
+            size="sm"
+            variant="bordered"
+            classNames={{
+              trigger: "h-10 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25",
+              popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+            }}
+          >
+            <SelectItem key="date-desc" textValue="Recientes">Recientes</SelectItem>
+            <SelectItem key="amount-desc" textValue="Mayor $">Mayor $</SelectItem>
+            <SelectItem key="amount-asc" textValue="Menor $">Menor $</SelectItem>
+          </Select>
+        </div>
       </div>
 
       {/* Tabla de Resultados */}
       <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="border-b border-[#cac4ce]/40 dark:border-white/10 bg-slate-50/70 dark:bg-black/20 text-[#8d86c9] dark:text-[#cac4ce] text-xs font-bold uppercase tracking-wider">
-                <th className="py-3.5 px-5">Transacción</th>
+              <tr className="border-b border-[#cac4ce]/40 dark:border-white/10 bg-slate-50/75 dark:bg-black/20 text-xs font-semibold text-[#8d86c9] dark:text-[#cac4ce] uppercase tracking-wider">
+                <th className="py-3.5 px-5">Movimiento</th>
                 <th className="py-3.5 px-5">Categoría</th>
                 <th className="py-3.5 px-5">Fecha</th>
                 <th className="py-3.5 px-5 text-right">Monto</th>
                 <th className="py-3.5 px-5 text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#cac4ce]/30 dark:divide-white/5 text-sm">
-              {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((tx) => (
-                  <tr 
-                    key={tx.id} 
-                    className="hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors"
-                  >
-                    <td className="py-4 px-5">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl shrink-0 ${
-                          tx.type === 'income'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                        }`}>
-                          {tx.type === 'income' ? <ArrowDownLeft className="w-4 h-4"/> : <ArrowUpRight className="w-4 h-4"/>}
+            {loading ? (
+              <SkeletonTableRows rows={6} />
+            ) : filteredTransactions.length > 0 ? (
+              <tbody className="divide-y divide-[#cac4ce]/30 dark:divide-white/5 font-medium">
+                {filteredTransactions.map((tx) => {
+                  const isIncome = tx.type === 'INCOME';
+                  const amountVal = Number(tx.amount || 0);
+                  const categoryName = tx.category_detail?.name || 'General';
+                  const categoryColor = tx.category_detail?.color || '#9067c6';
+
+                  return (
+                    <tr 
+                      key={tx.id} 
+                      className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors"
+                    >
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-xl shrink-0 ${
+                            isIncome 
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
+                              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                          }`}>
+                            {isIncome ? <ArrowDownLeft className="w-4 h-4"/> : <ArrowUpRight className="w-4 h-4"/>}
+                          </div>
+                          <div>
+                            <p className="font-bold text-[#242038] dark:text-[#f7ece1]">
+                              {tx.description || 'Sin concepto'}
+                            </p>
+                            <p className="text-xs text-[#8d86c9] dark:text-[#cac4ce]">
+                              {isIncome ? 'Ingreso recibido' : 'Gasto registrado'}
+                            </p>
+                          </div>
                         </div>
-                        <span className="font-semibold text-[#242038] dark:text-[#f7ece1]">
-                          {tx.title}
+                      </td>
+                      <td className="py-4 px-5">
+                        <span 
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                          style={{ 
+                            backgroundColor: `${categoryColor}15`, 
+                            color: categoryColor,
+                            border: `1px solid ${categoryColor}30`
+                          }}
+                        >
+                          <span 
+                            className="w-1.5 h-1.5 rounded-full" 
+                            style={{ backgroundColor: categoryColor }} 
+                          />
+                          {categoryName}
                         </span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-5">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-black/30 border border-[#cac4ce]/30 dark:border-white/10 text-xs font-medium text-[#242038] dark:text-[#cac4ce]">
-                        <Tag className="w-3 h-3 text-[#9067c6]"/>
-                        {tx.category}
-                      </span>
-                    </td>
-                    <td className="py-4 px-5 text-xs text-[#8d86c9] dark:text-[#cac4ce]">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5"/>
+                      </td>
+                      <td className="py-4 px-5 text-xs text-[#8d86c9] dark:text-[#cac4ce]">
                         {tx.date}
-                      </div>
-                    </td>
-                    <td className="py-4 px-5 text-right font-bold">
-                      <span className={tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
-                        {tx.type === 'income' ? '+' : ''}${Math.abs(tx.amount).toFixed(2)}
-                      </span>
-                    </td>
-                    <td className="py-4 px-5 text-center">
-                      <button
-                        onClick={() => handleDelete(tx.id)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
-                        title="Eliminar transacción"
-                      >
-                        <Trash2 className="w-4 h-4"/>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="py-12 text-center text-[#8d86c9] dark:text-[#cac4ce]">
-                    <p className="text-sm font-medium">No se encontraron movimientos con los filtros aplicados.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
+                      </td>
+                      <td className="py-4 px-5 text-right font-black text-sm">
+                        <span className={isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
+                          {isIncome ? '+' : '-'}{formatCurrency(Math.abs(amountVal), 'ARS')}
+                        </span>
+                      </td>
+                      <td className="py-4 px-5 text-center">
+                        <button
+                          type="button"
+                          onClick={() => setItemToDelete(tx.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                          title="Eliminar transacción"
+                        >
+                          <Trash2 className="w-4 h-4"/>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            ) : null}
           </table>
+
+          {!loading && filteredTransactions.length === 0 && (
+            <EmptyState
+              title="No se encontraron movimientos"
+              description="No hay transacciones que coincidan con los filtros seleccionados."
+              actionLabel="+ Nueva Transacción"
+              onAction={handleOpenModal}
+            />
+          )}
         </div>
 
-        {/* Pie de tabla con totalizadores */}
-        <div className="p-4 border-t border-[#cac4ce]/40 dark:border-white/10 bg-slate-50/50 dark:bg-black/10 flex items-center justify-between text-xs text-[#8d86c9] dark:text-[#cac4ce]">
-          <span>Mostrando {filteredTransactions.length} de {transactions.length} registros</span>
+        {/* Pie de tabla con totalizadores y paginación */}
+        <div className="p-4 border-t border-[#cac4ce]/40 dark:border-white/10 bg-slate-50/50 dark:bg-black/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#8d86c9] dark:text-[#cac4ce]">
+          <span>Mostrando {filteredTransactions.length} de {totalCount} registros</span>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                className="px-3 py-1.5 rounded-lg border border-[#cac4ce]/60 dark:border-white/10 text-xs font-semibold text-[#242038] dark:text-[#cac4ce] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Anterior
+              </button>
+              <span className="font-bold text-[#242038] dark:text-[#f7ece1] px-2">
+                Pág. {page} de {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                className="px-3 py-1.5 rounded-lg border border-[#cac4ce]/60 dark:border-white/10 text-xs font-semibold text-[#242038] dark:text-[#cac4ce] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
+
           <span className="font-semibold text-[#242038] dark:text-[#f7ece1]">
-            Balance filtrado: ${filteredTransactions.reduce((acc, curr) => acc + curr.amount, 0).toFixed(2)}
+            Balance en página: <span className={pageBalance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
+              {pageBalance >= 0 ? '+' : '-'}{formatCurrency(Math.abs(pageBalance), 'ARS')}
+            </span>
           </span>
         </div>
       </div>
 
-      {/* Modal Nueva Transacción */}
+      {/* Modal Nueva Transacción con HeroUI */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-3xl p-6 shadow-2xl relative">
+          <div className="w-full max-w-lg bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-3xl p-7 sm:p-8 shadow-2xl relative">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#cac4ce]/30 dark:border-white/10">
               <h3 className="text-lg font-extrabold text-[#242038] dark:text-[#f7ece1]">
                 Nueva Transacción
               </h3>
               <button 
+                type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"
               >
@@ -294,10 +501,16 @@ export default function TransactionsPage() {
               </button>
             </div>
 
+            {modalError && (
+              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
+                {modalError}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-2 p-1 mb-4 rounded-xl bg-slate-100 dark:bg-black/30 border border-[#cac4ce]/30 dark:border-white/5">
               <button
                 type="button"
-                onClick={() => setNewType('expense')}
+                onClick={() => handleTypeChange('expense')}
                 className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   newType === 'expense' ? 'bg-rose-500 text-white shadow-sm' : 'text-[#8d86c9] dark:text-[#cac4ce]'
                 }`}
@@ -306,7 +519,7 @@ export default function TransactionsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setNewType('income')}
+                onClick={() => handleTypeChange('income')}
                 className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   newType === 'income' ? 'bg-emerald-600 text-white shadow-sm' : 'text-[#8d86c9] dark:text-[#cac4ce]'
                 }`}
@@ -315,97 +528,142 @@ export default function TransactionsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="flex flex-col gap-3.5">
-              <div>
-                <label className="text-xs font-semibold text-[#242038] dark:text-[#cac4ce] block mb-1">Monto ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required
-                  placeholder="0.00"
-                  value={newAmount}
-                  onChange={(e) => setNewAmount(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              </div>
+            <form onSubmit={handleCreate} className="flex flex-col gap-5">
+              {/* Monto con HeroUI Input - Signo negativo implícito, solo números positivos */}
+              <Input
+                label="Monto"
+                type="text"
+                inputMode="decimal"
+                isRequired
+                placeholder="0.00"
+                startContent={<span className="text-[#8d86c9] text-sm">$</span>}
+                value={newAmount}
+                onChange={(e) => {
+                  const sanitized = e.target.value.replace(/[^0-9.]/g, '');
+                  setNewAmount(sanitized);
+                }}
+                variant="bordered"
+                size="sm"
+                classNames={{
+                  inputWrapper: "h-12 px-4 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 focus-within:border-[#9067c6] dark:focus-within:border-[#9067c6]",
+                  input: "text-sm",
+                }}
+              />
 
-              <div>
-                <label className="text-xs font-semibold text-[#242038] dark:text-[#cac4ce] block mb-1">Concepto / Título</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej. Combustible, Compra en farmacia..."
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] placeholder:text-[#cac4ce] text-sm focus:outline-none focus:border-[#9067c6] transition-colors"
-                />
-              </div>
+              {/* Concepto con HeroUI Input */}
+              <Input
+                label="Concepto / Título"
+                type="text"
+                isRequired
+                placeholder="Ej. Combustible, Farmacia..."
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                variant="bordered"
+                size="sm"
+                classNames={{
+                  inputWrapper: "h-12 px-4 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 focus-within:border-[#9067c6] dark:focus-within:border-[#9067c6]",
+                  input: "text-sm",
+                }}
+              />
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Select
-                    label="Categoría"
-                    placeholder="Selecciona una categoría"
-                    selectedKeys={new Set([newCategory])}
-                    onSelectionChange={(keys) => {
-                      const value = Array.from(keys)[0];
-                      if (value) setNewCategory(value);
-                    }}
-                    variant="bordered"
-                    size="sm"
-                    popoverProps={{ className: "z-[150]" }}
-                    classNames={{
-                      trigger: "h-11 bg-[#fdfbf9] dark:bg-black/25 border border-[#cac4ce] dark:border-white/15 rounded-xl",
-                      label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce]",
-                      value: "text-sm text-[#242038] dark:text-[#f7ece1]",
-                      popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
-                    }}
-                  >
-                    <Select.Item key="Alimentación" textValue="Alimentación">Alimentación</Select.Item>
-                    <Select.Item key="Transporte" textValue="Transporte">Transporte</Select.Item>
-                    <Select.Item key="Servicios" textValue="Servicios">Servicios</Select.Item>
-                    <Select.Item key="Ocio" textValue="Ocio">Ocio</Select.Item>
-                    <Select.Item key="Salud" textValue="Salud">Salud</Select.Item>
-                    <Select.Item key="Ingresos" textValue="Ingresos / Salario">Ingresos / Salario</Select.Item>
-                    <Select.Item key="Otros" textValue="Otros">Otros</Select.Item>
-                  </Select>
-                </div>
+                {/* Categoría con HeroUI Select y SelectItem */}
+                <Select
+                  label="Categoría"
+                  placeholder="Seleccionar..."
+                  selectedKeys={newCategoryId ? new Set([String(newCategoryId)]) : new Set()}
+                  onSelectionChange={(keys) => {
+                    const val = Array.from(keys)[0];
+                    if (val) setNewCategoryId(String(val));
+                  }}
+                  isRequired
+                  variant="bordered"
+                  size="sm"
+                  classNames={{
+                    trigger: "h-12 px-4 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 text-[#242038] dark:text-[#f7ece1] text-sm",
+                    popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+                  }}
+                >
+                  {eligibleCategories.map((cat) => (
+                    <SelectItem key={String(cat.id)} textValue={cat.name}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </Select>
 
-                <div className="flex flex-col gap-1">
-                  <DatePicker
-                    label="Fecha"
-                    value={selectedDate}
-                    onChange={setSelectedDate}
-                    variant="bordered"
-                    popoverProps={{ className: "z-[150]" }}
-                    classNames={{
-                      base: "w-full",
-                      label: "text-xs font-semibold text-[#242038] dark:text-[#cac4ce] -mb-1",
-                      inputWrapper: "h-11 rounded-xl border border-slate-200 dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 hover:border-slate-300 dark:hover:border-white/25 focus-within:border-[#9067c6] dark:focus-within:border-[#9067c6] transition-colors shadow-none",
-                      input: "text-sm text-[#242038] dark:text-[#f7ece1]",
-                      selectorButton: "text-[#8d86c9] dark:text-[#cac4ce]/60",
-                    }}
-                  />
-                </div>
+                {/* Fecha con HeroUI DatePicker */}
+                <DatePicker
+                  label="Fecha"
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  isRequired
+                  variant="bordered"
+                  size="sm"
+                  classNames={{
+                    inputWrapper: "h-12 px-4 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25 focus-within:border-[#9067c6] dark:focus-within:border-[#9067c6] text-sm",
+                    popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+                  }}
+                />
               </div>
 
-              <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[#cac4ce]/30 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-[#cac4ce] dark:border-white/15 text-[#242038] dark:text-[#cac4ce] text-xs font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              {/* Botones con HeroUI Button */}
+              <div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-[#cac4ce]/30 dark:border-white/10">
+                <Button
+                  variant="bordered"
+                  onPress={() => setIsModalOpen(false)}
+                  isDisabled={createMutation.isPending}
+                  className="rounded-xl border-[#cac4ce] dark:border-white/15 text-xs font-semibold cursor-pointer"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
+                  color="primary"
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs font-bold shadow-md shadow-[#9067c6]/20 transition-all cursor-pointer"
+                  isLoading={createMutation.isPending}
+                  className="bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs font-bold rounded-xl shadow-md shadow-[#9067c6]/20 cursor-pointer"
                 >
                   Registrar
-                </button>
+                </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Eliminación */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-sm bg-white dark:bg-[#1c182d] border border-slate-200/80 dark:border-white/10 rounded-3xl p-6 shadow-2xl text-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+              <Trash2 className="w-6 h-6"/>
+            </div>
+            
+            <h3 className="text-lg font-bold text-[#242038] dark:text-[#f7ece1] mb-1">
+              ¿Eliminar elemento?
+            </h3>
+            <p className="text-xs text-[#8d86c9] dark:text-[#cac4ce] mb-6">
+              Esta acción no se puede deshacer y afectará el balance de tus registros.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setItemToDelete(null)}
+                className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold text-[#242038] dark:text-[#cac4ce] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleDelete(itemToDelete);
+                  setItemToDelete(null);
+                }}
+                className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all cursor-pointer"
+              >
+                Eliminar
+              </button>
+            </div>
           </div>
         </div>
       )}
