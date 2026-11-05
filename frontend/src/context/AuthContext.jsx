@@ -24,10 +24,14 @@ import { AuthContext } from "./authContextObject";
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [hasToken] = useState(() => Boolean(localStorage.getItem('access_token')));
 
   const clearSession = useCallback(() => {
     clearAccessToken();
+    try {
+      localStorage.removeItem("access_token");
+    } catch {
+      // ignore
+    }
     setUser(null);
   }, []);
 
@@ -47,6 +51,13 @@ export function AuthProvider({ children }) {
         const access = await refreshRequest();
         if (cancelled) return;
         setAccessToken(access);
+        if (access) {
+          try {
+            localStorage.setItem("access_token", access);
+          } catch {
+            // ignore
+          }
+        }
 
         const profile = await fetchProfileRequest();
         if (!cancelled) {
@@ -55,12 +66,6 @@ export function AuthProvider({ children }) {
       } catch {
         // Sin sesion previa valida: el usuario vera las rutas publicas.
         if (!cancelled) {
-          try {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-          } catch {
-            // ignore
-          }
           clearSession();
         }
       } finally {
@@ -77,6 +82,13 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const data = await loginRequest(email, password);
     setAccessToken(data.access);
+    if (data?.access) {
+      try {
+        localStorage.setItem("access_token", data.access);
+      } catch {
+        // ignore
+      }
+    }
 
     try {
       const profile = await fetchProfileRequest();
@@ -113,13 +125,13 @@ export function AuthProvider({ children }) {
     () => ({
       user,
       loading,
-      isAuthenticated: Boolean(user) || hasToken,
+      isAuthenticated: Boolean(user),
       login,
       register,
       logout,
       updateProfile,
     }),
-    [user, loading, hasToken, login, register, logout, updateProfile]
+    [user, loading, login, register, logout, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

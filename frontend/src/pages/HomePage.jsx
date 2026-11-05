@@ -21,11 +21,13 @@ import {
   BadgeCheck
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/useAuth';
 
 export default function HomePage() {
   const { mode, toggleMode } = useTheme();
   const isDark = mode === 'dark';
-  const [isAuthenticated] = useState(() => Boolean(localStorage.getItem('access_token')));
+  const { isAuthenticated: authIsAuthenticated } = useAuth();
+  const isAuthenticated = authIsAuthenticated || (typeof window !== 'undefined' && Boolean(localStorage.getItem('access_token')));
   const [activeMockupTab, setActiveMockupTab] = useState('peshi'); // 'balance' | 'gastos' | 'peshi'
 
   const handleSmoothScroll = (e, targetId) => {
@@ -177,7 +179,7 @@ export default function HomePage() {
                 to={isAuthenticated ? "/dashboard" : "/register"}
                 className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-sm font-bold shadow-lg shadow-[#9067c6]/25 transition-all hover:scale-[1.03] active:scale-[0.98] cursor-pointer"
               >
-                {isAuthenticated ? "Ir al Dashboard" : "Comenzar ahora — Es gratis"}
+                {isAuthenticated ? "Ir a mi Panel" : "Comenzar ahora — Es gratis"}
                 <ArrowRight className="w-4 h-4"/>
               </Link>
               <Link

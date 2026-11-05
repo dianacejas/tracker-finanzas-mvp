@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, ArrowLeftRight, PieChart, LogOut, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
+import { useTheme } from '../context/ThemeContext';
 import peshiLogo from '/peshi_logo_fin.png';
 
 const navItems = [
@@ -12,39 +12,21 @@ const navItems = [
 
 export function AppLayout() {
   const { logout } = useAuth();
+  const { mode, toggleMode } = useTheme();
   const navigate = useNavigate();
-
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
-  });
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDark]);
-
-  const toggleTheme = () => setIsDark((prev) => !prev);
 
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (error) {
+    } catch {
       // Aseguramos el cierre de sesión aunque falle la petición
     } finally {
       try {
         localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
       } catch {
         // ignore
       }
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
     }
   };
 
@@ -54,16 +36,20 @@ export function AppLayout() {
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#1c182d]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-white/10">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           {/* Marca */}
-          <div className="flex items-center gap-2.5">
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 group transition-transform hover:scale-[1.02]"
+            title="Ir a inicio"
+          >
             <img
               src={peshiLogo}
               alt="PESHITO Logo"
-              className="w-9 h-9 object-contain drop-shadow-sm"
+              className="w-9 h-9 object-contain drop-shadow-sm transition-transform group-hover:rotate-[-4deg]"
             />
-            <span className="text-lg font-black tracking-widest text-[#9067c6] uppercase">
+            <span className="text-lg font-black tracking-widest text-[#9067c6] group-hover:text-[#8d86c9] uppercase transition-colors">
               PESHITO
             </span>
-          </div>
+          </Link>
 
           {/* Navegación Desktop */}
           <nav className="hidden md:flex items-center gap-1">
@@ -89,11 +75,11 @@ export function AppLayout() {
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               type="button"
-              onClick={toggleTheme}
+              onClick={toggleMode}
               className="p-2 rounded-full bg-[#f7ece1] dark:bg-[#242038]/80 border border-[#cac4ce]/60 dark:border-white/10 text-[#242038] dark:text-[#f7ece1] hover:scale-105 transition-all cursor-pointer"
               aria-label="Alternar tema"
             >
-              {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-[#242038]" />}
+              {mode === 'dark' ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-[#242038]" />}
             </button>
             <button
               type="button"

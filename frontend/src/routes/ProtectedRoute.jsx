@@ -36,7 +36,9 @@ export function ProtectedRoute({ children }) {
     return <SessionLoader />;
   }
 
-  if (!isAuthenticated) {
+  const hasToken = typeof window !== 'undefined' && Boolean(localStorage.getItem('access_token'));
+
+  if (!isAuthenticated && !hasToken) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 

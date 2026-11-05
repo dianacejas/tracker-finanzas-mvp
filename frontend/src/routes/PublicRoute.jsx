@@ -23,7 +23,9 @@ export function PublicRoute({ children }) {
     );
   }
 
-  if (isAuthenticated) {
+  const hasToken = typeof window !== 'undefined' && Boolean(localStorage.getItem('access_token'));
+
+  if (isAuthenticated || hasToken) {
     return <Navigate to="/dashboard" replace />;
   }
 
