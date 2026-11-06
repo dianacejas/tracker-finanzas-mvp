@@ -232,7 +232,7 @@ export default function TransactionsPage() {
         <Button 
           color="primary"
           onPress={handleOpenModal}
-          className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer"
+          className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer w-full sm:w-auto"
           startContent={<Plus className="w-4 h-4" />}
         >
           Nueva Transacción

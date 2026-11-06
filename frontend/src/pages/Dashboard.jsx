@@ -258,14 +258,14 @@ export default function Dashboard() {
             Panel de Control
           </h1>
           <p className="text-xs sm:text-sm text-[#8d86c9] dark:text-[#cac4ce] font-medium mt-0.5">
-            Vista general de tus balances y actividad financiera sincronizada con el backend
+            Vista general de tus balances y actividad financiera al día.
           </p>
         </div>
 
         <Button 
           color="primary"
           onPress={handleOpenModal}
-          className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer"
+          className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer w-full sm:w-auto"
           startContent={<Plus className="w-4 h-4" />}
         >
           Nuevo Movimiento
@@ -497,7 +497,7 @@ export default function Dashboard() {
 
               return (
                 <div key={tx.id} className="py-3.5 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className={`p-2 rounded-xl shrink-0 ${
                       isIncome 
                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
@@ -505,8 +505,8 @@ export default function Dashboard() {
                     }`}>
                       {isIncome ? <ArrowDownLeft className="w-4 h-4"/> : <ArrowUpRight className="w-4 h-4"/>}
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-[#242038] dark:text-[#f7ece1]">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-[#242038] dark:text-[#f7ece1] truncate">
                         {tx.description || 'Sin concepto'}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">

@@ -203,7 +203,7 @@ export default function BudgetsPage() {
             <PieChart className="w-6 h-6"/>
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#242038] dark:text-[#f7ece1] tracking-tight">
                 Presupuestos
               </h1>
@@ -238,7 +238,7 @@ export default function BudgetsPage() {
         <Button 
           color="primary"
           onPress={handleOpenModal}
-          className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer"
+          className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer w-full sm:w-auto"
           startContent={<Plus className="w-4 h-4" />}
         >
           Nuevo Presupuesto

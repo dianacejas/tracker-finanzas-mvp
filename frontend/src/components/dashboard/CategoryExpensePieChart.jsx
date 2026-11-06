@@ -1,5 +1,5 @@
-import React from "react";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import React, { useState } from "react";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { PieChart as PieChartIcon } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters";
 import EmptyState from "../common/EmptyState";
@@ -16,32 +16,8 @@ const DEFAULT_COLORS = [
   "#f97316", // Naranja
 ];
 
-function CustomTooltip({ active, payload, currency = "ARS" }) {
-  if (!active || !payload || !payload.length) {
-    return null;
-  }
-
-  const item = payload[0].payload;
-  const name = item.name || "Categoría";
-  const amount = item.value;
-  const percentage = item.percentage;
-
-  return (
-    <div className="rounded-2xl border border-[#cac4ce]/60 dark:border-white/10 bg-white/95 dark:bg-[#1c182d]/95 px-4 py-2.5 shadow-2xl backdrop-blur-md">
-      <p className="text-xs font-bold text-[#242038] dark:text-[#f7ece1]">{name}</p>
-      <p className="mt-1 text-sm font-extrabold tabular-nums text-[#9067c6] dark:text-[#8d86c9]">
-        {formatCurrency(amount, currency)}
-      </p>
-      {percentage !== undefined && percentage !== null && (
-        <p className="text-[11px] font-semibold text-[#8d86c9] dark:text-[#cac4ce]">
-          {Number(percentage).toFixed(1)}% del total
-        </p>
-      )}
-    </div>
-  );
-}
-
 export default function CategoryExpensePieChart({ data = [], currency = "ARS", loading, month = "Mes actual" }) {
+  const [hoveredCategory, setHoveredCategory] = useState(null);
   const displayMonth = month;
 
   if (loading) {
@@ -129,9 +105,9 @@ export default function CategoryExpensePieChart({ data = [], currency = "ARS", l
       <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-6 pt-4">
         {/* Columna Izquierda (md:col-span-5) - Gráfico Centrado con etiqueta interior */}
         <div className="md:col-span-5 relative flex items-center justify-center">
-          <div className="relative h-60 sm:h-64 w-full">
+          <div className="relative min-h-[220px] h-60 sm:h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart onMouseLeave={() => setHoveredCategory(null)}>
                 <Pie
                   data={finalChartData}
                   dataKey="value"
@@ -143,23 +119,37 @@ export default function CategoryExpensePieChart({ data = [], currency = "ARS", l
                   cornerRadius={4}
                   paddingAngle={3}
                   stroke="none"
+                  onMouseLeave={() => setHoveredCategory(null)}
                 >
                   {finalChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.color}
+                      className="transition-opacity duration-200 cursor-pointer outline-none"
+                      opacity={hoveredCategory && hoveredCategory.name !== entry.name ? 0.4 : 1}
+                      onMouseEnter={() => setHoveredCategory(entry)}
+                    />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip currency={currency} />} />
               </PieChart>
             </ResponsiveContainer>
 
             {/* Etiqueta centrada en el hueco de la dona */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-2">
-              <span className="text-[11px] sm:text-xs font-bold text-[#8d86c9] uppercase tracking-wider">
-                Total Gastos
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-3 transition-all duration-200">
+              <span
+                className="text-[11px] sm:text-xs font-bold uppercase tracking-wider truncate max-w-[130px] transition-colors"
+                style={{ color: hoveredCategory ? hoveredCategory.color : "#8d86c9" }}
+              >
+                {hoveredCategory ? hoveredCategory.name : "Total Gastos"}
               </span>
-              <span className="text-xl sm:text-2xl font-black text-[#242038] dark:text-[#f7ece1] tabular-nums mt-0.5 tracking-tight">
-                {formatCurrency(totalSum, currency)}
+              <span className="text-xl sm:text-2xl font-black text-[#242038] dark:text-[#f7ece1] tabular-nums mt-0.5 tracking-tight transition-all">
+                {formatCurrency(hoveredCategory ? hoveredCategory.value : totalSum, currency)}
               </span>
+              {hoveredCategory && (
+                <span className="text-[11px] font-semibold text-[#8d86c9] dark:text-[#cac4ce] tabular-nums mt-0.5">
+                  {hoveredCategory.percentage.toFixed(1)}% del total
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -169,18 +159,25 @@ export default function CategoryExpensePieChart({ data = [], currency = "ARS", l
           <ul className="space-y-3 max-h-72 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {finalChartData.map((item, index) => {
               const percentage = item.percentage;
+              const isHovered = hoveredCategory?.name === item.name;
               return (
                 <li
                   key={index}
-                  className="flex flex-col gap-1.5 p-2 rounded-xl hover:bg-slate-100/60 dark:hover:bg-white/[0.03] transition-colors"
+                  onMouseEnter={() => setHoveredCategory(item)}
+                  onMouseLeave={() => setHoveredCategory(null)}
+                  className={`flex flex-col gap-1.5 p-2 rounded-xl transition-all cursor-pointer ${
+                    isHovered
+                      ? "bg-slate-200/60 dark:bg-white/[0.08] scale-[1.01]"
+                      : "hover:bg-slate-100/60 dark:hover:bg-white/[0.03]"
+                  }`}
                 >
-                  <div className="flex items-center justify-between text-xs sm:text-sm">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <span
                         className="h-2.5 w-2.5 rounded-full shrink-0"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="font-medium text-[#242038] dark:text-[#f7ece1] truncate max-w-[130px] sm:max-w-[180px]">
+                      <span className="font-medium text-[#242038] dark:text-[#f7ece1] truncate">
                         {item.name}
                       </span>
                     </div>

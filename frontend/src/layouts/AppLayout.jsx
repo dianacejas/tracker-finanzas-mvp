@@ -100,7 +100,7 @@ export function AppLayout() {
       </main>
 
       {/* Navegación Móvil */}
-      <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white/95 dark:bg-[#1c182d]/95 backdrop-blur-md border-t border-[#cac4ce]/50 dark:border-white/10">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 dark:bg-[#1c182d]/95 backdrop-blur-md border-t border-[#cac4ce]/50 dark:border-white/10 shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
         <div className="grid grid-cols-3">
           {navItems.map((item) => (
             <NavLink
@@ -120,7 +120,7 @@ export function AppLayout() {
           ))}
         </div>
       </nav>
-      <div className="h-16 md:hidden" />
+      <div className="h-20 md:hidden pointer-events-none" />
     </div>
   );
 }
