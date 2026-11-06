@@ -18,8 +18,20 @@ import {
   Lock,
   ShieldCheck,
   FileDown,
-  BadgeCheck
+  BadgeCheck,
+  FileText,
+  Menu,
+  X
 } from 'lucide-react';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  useDisclosure
+} from '@heroui/react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/useAuth';
 
@@ -29,6 +41,14 @@ export default function HomePage() {
   const { isAuthenticated: authIsAuthenticated } = useAuth();
   const isAuthenticated = authIsAuthenticated || (typeof window !== 'undefined' && Boolean(localStorage.getItem('access_token')));
   const [activeMockupTab, setActiveMockupTab] = useState('peshi'); // 'balance' | 'gastos' | 'peshi'
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [modalType, setModalType] = useState('terms'); // 'terms' | 'privacy'
+
+  const handleOpenModal = (type) => {
+    setModalType(type);
+    onOpen();
+  };
 
   const handleSmoothScroll = (e, targetId) => {
     e.preventDefault();
@@ -71,9 +91,6 @@ export default function HomePage() {
             <span className="text-xl sm:text-2xl font-black tracking-tight text-[#242038] dark:text-[#f7ece1]">
               PESHITO
             </span>
-            <span className="hidden sm:inline-block text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#9067c6]/10 text-[#9067c6] border border-[#9067c6]/20">
-              v1.0
-            </span>
           </a>
 
           {/* Navegación central con Smooth Scroll controlado */}
@@ -109,7 +126,7 @@ export default function HomePage() {
           </nav>
 
           {/* Botones de acción */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={toggleMode}
               className="p-2 rounded-xl text-[#242038]/70 dark:text-[#cac4ce] hover:text-[#9067c6] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/5 transition-colors cursor-pointer"
@@ -120,10 +137,10 @@ export default function HomePage() {
 
             {isAuthenticated ? (
               <Link 
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs font-bold shadow-md shadow-[#9067c6]/20 transition-all hover:scale-[1.02] active:scale-[0.98]" 
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs font-bold shadow-md shadow-[#9067c6]/20 transition-all hover:scale-[1.02] active:scale-[0.98]" 
                 to="/dashboard"
               >
-                Ir a mi Panel
+                <span>Ir a mi Panel</span>
                 <ArrowRight className="w-3.5 h-3.5"/>
               </Link>
             ) : (
@@ -135,15 +152,92 @@ export default function HomePage() {
                   Iniciar sesión
                 </Link>
                 <Link 
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs font-bold shadow-md shadow-[#9067c6]/25 transition-all hover:scale-[1.02] active:scale-[0.98]" 
+                  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs font-bold shadow-md shadow-[#9067c6]/25 transition-all hover:scale-[1.02] active:scale-[0.98]" 
                   to="/register"
                 >
-                  Crear cuenta gratis
+                  <span>Crear cuenta</span>
                 </Link>
               </>
             )}
+
+            {/* Botón Hamburguesa Móvil */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-xl text-[#242038]/70 dark:text-[#cac4ce] hover:text-[#9067c6] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Menú Móvil Desplegable */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-200/80 dark:border-white/10 bg-[#faf8f6]/95 dark:bg-[#1c182d]/95 backdrop-blur-xl px-4 py-5 shadow-2xl space-y-4">
+            <nav className="flex flex-col gap-2">
+              <a
+                href="#inicio"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  handleSmoothScroll(e, 'inicio');
+                }}
+                className="px-3 py-2 rounded-xl text-sm font-semibold text-[#242038] dark:text-[#f7ece1] hover:bg-[#9067c6]/10 hover:text-[#9067c6] transition-colors"
+              >
+                Inicio
+              </a>
+              <a
+                href="#caracteristicas"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  handleSmoothScroll(e, 'caracteristicas');
+                }}
+                className="px-3 py-2 rounded-xl text-sm font-semibold text-[#242038] dark:text-[#f7ece1] hover:bg-[#9067c6]/10 hover:text-[#9067c6] transition-colors"
+              >
+                Características
+              </a>
+              <a
+                href="#como-funciona"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  handleSmoothScroll(e, 'como-funciona');
+                }}
+                className="px-3 py-2 rounded-xl text-sm font-semibold text-[#242038] dark:text-[#f7ece1] hover:bg-[#9067c6]/10 hover:text-[#9067c6] transition-colors"
+              >
+                Cómo funciona
+              </a>
+              <a
+                href="#seguridad"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  handleSmoothScroll(e, 'seguridad');
+                }}
+                className="px-3 py-2 rounded-xl text-sm font-semibold text-[#242038] dark:text-[#f7ece1] hover:bg-[#9067c6]/10 hover:text-[#9067c6] transition-colors"
+              >
+                Seguridad
+              </a>
+            </nav>
+
+            {!isAuthenticated && (
+              <div className="pt-2 border-t border-slate-200/60 dark:border-white/10 flex flex-col gap-2">
+                <Link
+                  to="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full text-center py-2.5 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-bold text-[#242038] dark:text-[#f7ece1] hover:border-[#9067c6]"
+                >
+                  Iniciar sesión
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full text-center py-2.5 rounded-xl bg-[#9067c6] text-white text-xs font-bold shadow-md shadow-[#9067c6]/25"
+                >
+                  Crear cuenta gratis
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Hero Section Asimétrica (2 Columnas en Desktop) */}
@@ -503,7 +597,7 @@ export default function HomePage() {
                 Tus datos son 100% confidenciales.
               </h3>
               <p className="text-xs sm:text-sm text-[#242038]/70 dark:text-[#cac4ce] mt-2 leading-relaxed max-w-xl">
-                Tus registros están resguardados bajo autenticación segura por tokens JWT. No comercializamos tu información financiera ni mostramos anuncios molestos.
+                Tus registros están blindados con autenticación segura y cifrado continuo. No comercializamos tu información financiera ni mostramos anuncios molestos.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-4 mt-6 pt-4 border-t border-slate-200/60 dark:border-white/5 text-xs text-[#242038]/60 dark:text-[#cac4ce]">
@@ -592,9 +686,9 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl bg-[#9067c6]/10 text-[#9067c6] flex items-center justify-center mb-3">
               <Lock className="w-5 h-5 text-[#9067c6]" />
             </div>
-            <h4 className="text-sm font-bold text-[#242038] dark:text-[#f7ece1] mb-1">Cifrado JWT Seguro</h4>
+            <h4 className="text-sm font-bold text-[#242038] dark:text-[#f7ece1] mb-1">Seguridad y Encriptación</h4>
             <p className="text-xs text-[#242038]/70 dark:text-[#cac4ce] leading-relaxed">
-              Sesiones aisladas y encriptadas con tokens de renovación protegidos contra accesos no autorizados.
+              Tus datos están blindados con cifrado avanzado. Tu sesión y registros están resguardados para que solo tú tengas acceso.
             </p>
           </div>
 
@@ -612,9 +706,9 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl bg-[#9067c6]/10 text-[#9067c6] flex items-center justify-center mb-3">
               <FileDown className="w-5 h-5 text-[#9067c6]" />
             </div>
-            <h4 className="text-sm font-bold text-[#242038] dark:text-[#f7ece1] mb-1">Exportación Abierta</h4>
+            <h4 className="text-sm font-bold text-[#242038] dark:text-[#f7ece1] mb-1">Reportes y Exportación</h4>
             <p className="text-xs text-[#242038]/70 dark:text-[#cac4ce] leading-relaxed">
-              Tus finanzas no quedan atrapadas. Descarga tu historial de movimientos cuando quieras en formato CSV o JSON.
+              Tus finanzas no quedan atrapadas. Descarga tus resúmenes y reportes mensuales cuando quieras en PDF o Excel listos para imprimir o analizar.
             </p>
           </div>
 
@@ -632,13 +726,13 @@ export default function HomePage() {
 
       {/* Pre-footer Call to Action con Peshi Mascota (/peshi-bg.png) */}
       <section className="py-16 px-4 sm:px-6 max-w-5xl mx-auto">
-        <div className="relative p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-[#9067c6]/20 via-white/90 dark:via-[#1c182d]/90 to-[#8d86c9]/15 border border-[#9067c6]/30 shadow-2xl backdrop-blur-md overflow-hidden">
+        <div className="relative p-6 sm:p-10 md:p-12 rounded-3xl bg-gradient-to-br from-[#9067c6]/20 via-white/90 dark:via-[#1c182d]/90 to-[#8d86c9]/15 border border-[#9067c6]/30 shadow-2xl backdrop-blur-md overflow-hidden">
           <div className="absolute -top-16 -right-16 w-52 h-52 bg-[#9067c6]/20 blur-3xl rounded-full pointer-events-none" />
           <div className="absolute -bottom-16 -left-16 w-52 h-52 bg-[#8d86c9]/15 blur-3xl rounded-full pointer-events-none" />
 
-          <div className="grid grid-cols-1 md:grid-cols-5 md:items-center gap-6 text-left">
+          <div className="grid grid-cols-1 md:grid-cols-5 md:items-center gap-6 text-center md:text-left">
             {/* Columna de texto (3 columnas) */}
-            <div className="md:col-span-3">
+            <div className="md:col-span-3 flex flex-col items-center md:items-start">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#9067c6]/10 text-[#9067c6] border border-[#9067c6]/20 text-[10px] font-bold uppercase tracking-wider mb-4">
                 <Sparkles className="w-3 h-3 text-[#9067c6]" />
                 Comienza hoy mismo
@@ -649,10 +743,10 @@ export default function HomePage() {
               <p className="text-xs sm:text-sm text-[#242038]/70 dark:text-[#cac4ce] mt-3 leading-relaxed max-w-lg">
                 Únete a PESHITO y toma el mando de tus finanzas hoy mismo. Es rápido, visual, intuitivo y completamente gratuito.
               </p>
-              <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="mt-6 flex flex-col sm:flex-row items-center md:items-start gap-3 w-full sm:w-auto">
                 <Link
                   to={isAuthenticated ? "/dashboard" : "/register"}
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-sm font-bold shadow-lg shadow-[#9067c6]/25 transition-all hover:scale-[1.03] active:scale-[0.98] cursor-pointer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-sm font-bold shadow-lg shadow-[#9067c6]/25 transition-all hover:scale-[1.03] active:scale-[0.98] cursor-pointer"
                 >
                   {isAuthenticated ? "Ir a mi Panel" : "Crear mi cuenta gratis"}
                   <ArrowRight className="w-4 h-4"/>
@@ -665,30 +759,252 @@ export default function HomePage() {
 
             {/* Ilustración de Peshi (2 columnas) */}
             <div className="md:col-span-2 relative flex justify-center items-center">
-              <div className="absolute w-44 h-44 sm:w-52 sm:h-52 bg-[#9067c6]/20 blur-2xl rounded-full -z-10 animate-pulse" />
+              <div className="absolute w-36 h-36 sm:w-48 sm:h-48 bg-[#9067c6]/20 blur-2xl rounded-full -z-10 animate-pulse" />
               <img 
                 src="/peshi-bg.png" 
                 alt="Peshi Mascota" 
-                className="w-44 sm:w-56 h-auto object-contain drop-shadow-[0_20px_30px_rgba(144,103,198,0.35)] hover:scale-105 transition-transform duration-500 select-none"
+                className="w-32 sm:w-44 md:w-56 h-auto object-contain drop-shadow-[0_20px_30px_rgba(144,103,198,0.35)] hover:scale-105 transition-transform duration-500 select-none"
               />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200/80 dark:border-white/10 py-10 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#242038]/60 dark:text-[#cac4ce]">
-        <div className="flex items-center gap-2">
-          <img 
-            src="/peshi_logo_fin.png" 
-            alt="PESHITO" 
-            className="w-6 h-6 object-contain" 
-          />
-          <span className="font-bold text-[#242038] dark:text-[#f7ece1]">PESHITO</span>
-          <span>— Finanzas personales pensadas para personas reales.</span>
+      {/* Footer Completo */}
+      <footer className="border-t border-slate-200/80 dark:border-white/10 pt-16 pb-12 px-4 sm:px-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pb-12 border-b border-slate-200/60 dark:border-white/5">
+          {/* Lado Izquierdo: Branding & Autoría */}
+          <div className="md:col-span-5 flex flex-col gap-3">
+            <div 
+              onClick={(e) => handleSmoothScroll(e, 'inicio')}
+              className="flex items-center gap-2.5 cursor-pointer group w-fit"
+            >
+              <img 
+                src="/peshi_logo_fin.png" 
+                alt="PESHITO" 
+                className="w-8 h-8 object-contain transition-transform group-hover:scale-105" 
+              />
+              <span className="font-black text-lg tracking-wider text-[#9067c6] group-hover:text-[#8d86c9] uppercase transition-colors">
+                PESHITO
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-[#242038]/70 dark:text-[#cac4ce] max-w-sm leading-relaxed">
+              Finanzas personales pensadas para personas reales.
+            </p>
+            <p className="text-xs text-[#242038]/60 dark:text-[#cac4ce]/70 pt-1">
+              Diseñado y desarrollado por{" "}
+              <span className="font-semibold text-[#9067c6] dark:text-[#b392e2]">CP dev</span>
+            </p>
+          </div>
+
+          {/* Centro: Navegación Rápida */}
+          <div className="md:col-span-3 flex flex-col gap-3">
+            <h5 className="text-xs font-bold uppercase tracking-wider text-[#9067c6]">
+              Navegación
+            </h5>
+            <ul className="flex flex-col gap-2 text-xs font-medium text-[#242038]/70 dark:text-[#cac4ce]">
+              <li>
+                <a 
+                  href="#inicio" 
+                  onClick={(e) => handleSmoothScroll(e, 'inicio')}
+                  className="hover:text-[#9067c6] dark:hover:text-white transition-colors"
+                >
+                  Inicio
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#caracteristicas" 
+                  onClick={(e) => handleSmoothScroll(e, 'caracteristicas')}
+                  className="hover:text-[#9067c6] dark:hover:text-white transition-colors"
+                >
+                  Características
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#como-funciona" 
+                  onClick={(e) => handleSmoothScroll(e, 'como-funciona')}
+                  className="hover:text-[#9067c6] dark:hover:text-white transition-colors"
+                >
+                  Cómo funciona
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#seguridad" 
+                  onClick={(e) => handleSmoothScroll(e, 'seguridad')}
+                  className="hover:text-[#9067c6] dark:hover:text-white transition-colors"
+                >
+                  Seguridad
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Derecha: Legal & Redes Sociales */}
+          <div className="md:col-span-4 flex flex-col gap-3">
+            <h5 className="text-xs font-bold uppercase tracking-wider text-[#9067c6]">
+              Legal y Comunidad
+            </h5>
+            <div className="flex flex-col gap-2 text-xs font-medium text-[#242038]/70 dark:text-[#cac4ce]">
+              <button
+                type="button"
+                onClick={() => handleOpenModal('terms')}
+                className="text-left hover:text-[#9067c6] dark:hover:text-white transition-colors cursor-pointer w-fit"
+              >
+                Términos y condiciones
+              </button>
+              <button
+                type="button"
+                onClick={() => handleOpenModal('privacy')}
+                className="text-left hover:text-[#9067c6] dark:hover:text-white transition-colors cursor-pointer w-fit"
+              >
+                Política de privacidad
+              </button>
+            </div>
+
+            {/* Iconos de Redes Sociales */}
+            <div className="pt-2">
+              <span className="text-[11px] font-semibold text-[#8d86c9] dark:text-[#cac4ce]/70 block mb-2">
+                Conéctate con nosotros
+              </span>
+              <div className="flex items-center gap-2.5 text-[#242038]/70 dark:text-[#cac4ce]">
+                <a
+                  href="#"
+                  aria-label="X (Twitter)"
+                  className="w-8 h-8 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/5 flex items-center justify-center hover:text-[#9067c6] dark:hover:text-white hover:border-[#9067c6]/50 hover:scale-110 transition-all cursor-pointer shadow-sm"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </a>
+                <a
+                  href="#"
+                  aria-label="Instagram"
+                  className="w-8 h-8 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/5 flex items-center justify-center hover:text-[#9067c6] dark:hover:text-white hover:border-[#9067c6]/50 hover:scale-110 transition-all cursor-pointer shadow-sm"
+                >
+                  <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-2" viewBox="0 0 24 24" aria-hidden="true">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                  </svg>
+                </a>
+                <a
+                  href="#"
+                  aria-label="GitHub"
+                  className="w-8 h-8 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/5 flex items-center justify-center hover:text-[#9067c6] dark:hover:text-white hover:border-[#9067c6]/50 hover:scale-110 transition-all cursor-pointer shadow-sm"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                  </svg>
+                </a>
+                <a
+                  href="#"
+                  aria-label="LinkedIn"
+                  className="w-8 h-8 rounded-full border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/5 flex items-center justify-center hover:text-[#9067c6] dark:hover:text-white hover:border-[#9067c6]/50 hover:scale-110 transition-all cursor-pointer shadow-sm"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.69 1.69 0 0 0 1.69-1.69 1.69 1.69 0 1 0-3.38 0c0 .93.76 1.69 1.69 1.69m1.39 9.74v-8.37H5.07v8.37z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
-        <p>© 2026 PESHITO. Hecho con foco en diseño y simplicidad.</p>
+
+        {/* Barra de Cierre Inferior (Copyright) */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#242038]/60 dark:text-[#cac4ce]/70">
+          <p>© 2026 PESHITO. Todos los derechos reservados.</p>
+          <div className="flex items-center gap-4 text-[11px]">
+            <button
+              type="button"
+              onClick={() => handleOpenModal('terms')}
+              className="hover:text-[#9067c6] dark:hover:text-white transition-colors cursor-pointer"
+            >
+              Términos y condiciones
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => handleOpenModal('privacy')}
+              className="hover:text-[#9067c6] dark:hover:text-white transition-colors cursor-pointer"
+            >
+              Política de privacidad
+            </button>
+          </div>
+        </div>
       </footer>
+
+      {/* Modal Informativo de Términos / Privacidad */}
+      <Modal 
+        isOpen={isOpen} 
+        onOpenChange={onOpenChange}
+        placement="center"
+        backdrop="blur"
+        classNames={{
+          base: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/10 text-[#242038] dark:text-[#f7ece1] rounded-3xl mx-4 max-w-lg shadow-2xl",
+          header: "border-b border-slate-100 dark:border-white/10 pb-3 pt-5 px-6",
+          body: "py-5 px-6",
+          footer: "border-t border-slate-100 dark:border-white/10 pt-3 pb-5 px-6",
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex items-center gap-2 text-base font-bold">
+                {modalType === 'terms' ? (
+                  <>
+                    <FileText className="w-5 h-5 text-[#9067c6] shrink-0" />
+                    <span>Términos y Condiciones</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
+                    <span>Política de Privacidad</span>
+                  </>
+                )}
+              </ModalHeader>
+              <ModalBody className="text-xs leading-relaxed space-y-3.5 text-slate-600 dark:text-[#cac4ce]">
+                {modalType === 'terms' ? (
+                  <>
+                    <p>
+                      <strong className="text-[#242038] dark:text-[#f7ece1]">1. Propósito:</strong> PESHITO es una herramienta de registro y visualización de finanzas personales diseñada para acompañar tus hábitos de ahorro y control de gastos de forma autónoma.
+                    </p>
+                    <p>
+                      <strong className="text-[#242038] dark:text-[#f7ece1]">2. Uso del servicio:</strong> El usuario es responsable de la veracidad de los datos registrados y del resguardo de sus credenciales de acceso.
+                    </p>
+                    <p>
+                      <strong className="text-[#242038] dark:text-[#f7ece1]">3. Disponibilidad:</strong> La plataforma se ofrece como servicio continuo sin cargos ocultos ni vinculaciones bancarias obligatorias.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      <strong className="text-[#242038] dark:text-[#f7ece1]">1. Cero venta de datos:</strong> En PESHITO tu información financiera es estrictamente tuya. No comercializamos métricas ni registros con entidades comerciales ni redes publicitarias.
+                    </p>
+                    <p>
+                      <strong className="text-[#242038] dark:text-[#f7ece1]">2. Autenticación y resguardo:</strong> Tu cuenta opera mediante autenticación segura y cifrada para evitar accesos no autorizados a tus registros.
+                    </p>
+                    <p>
+                      <strong className="text-[#242038] dark:text-[#f7ece1]">3. Exportación y portabilidad:</strong> Puedes exportar o eliminar tus presupuestos y movimientos cuando lo desees en formatos abiertos y compatibles.
+                    </p>
+                  </>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <Button 
+                  className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold rounded-xl px-5 text-xs shadow-md shadow-[#9067c6]/20 cursor-pointer" 
+                  onPress={onClose} 
+                  size="sm"
+                >
+                  Entendido
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
 
     </div>
   );
