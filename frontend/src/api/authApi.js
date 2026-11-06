@@ -53,7 +53,7 @@ export function extractApiError(error, fallback = "Ocurrio un error inesperado."
   if (!data) {
     return error?.code === "ECONNABORTED"
       ? "La solicitud tardo demasiado. Verifica tu conexion."
-      : "No se pudo contactar con el servidor.";
+      : "No pudimos conectar con el servicio. Comprueba tu conexión e intenta de nuevo.";
   }
 
   if (typeof data === "string") {
@@ -61,6 +61,9 @@ export function extractApiError(error, fallback = "Ocurrio un error inesperado."
   }
 
   if (typeof data.detail === "string") {
+    if (data.detail.toLowerCase().includes("no active account") || data.detail.toLowerCase().includes("credentials")) {
+      return "El correo o la contraseña son incorrectos.";
+    }
     return data.detail;
   }
 

@@ -40,12 +40,12 @@ export default function Login() {
       await login(validation.data.email, validation.data.password);
       navigate(from, { replace: true });
     } catch (err) {
-      if (err?.name === 'TypeError' && err?.message?.toLowerCase().includes('fetch')) {
-        setErrorMessage('No se pudo conectar con el servidor. Verifica que Django esté corriendo en el puerto 8000.');
-      } else if (!err?.response) {
-        setErrorMessage('No se pudo conectar con el servidor. Verifica que Django esté corriendo en el puerto 8000.');
+      if (!err?.response || (err?.name === 'TypeError' && err?.message?.toLowerCase().includes('fetch'))) {
+        setErrorMessage('No pudimos conectar con el servicio. Comprueba tu conexión e intenta de nuevo.');
+      } else if (err?.response?.status === 401) {
+        setErrorMessage('El correo o la contraseña son incorrectos.');
       } else {
-        setErrorMessage(extractApiError(err, 'Credenciales incorrectas'));
+        setErrorMessage(extractApiError(err, 'El correo o la contraseña son incorrectos.'));
       }
     } finally {
       setIsLoading(false);

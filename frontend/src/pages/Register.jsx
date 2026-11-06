@@ -47,7 +47,11 @@ export default function Register() {
 
       navigate('/login');
     } catch (err) {
-      setErrorMessage(extractApiError(err, 'Error al registrar la cuenta'));
+      if (!err?.response || (err?.name === 'TypeError' && err?.message?.toLowerCase().includes('fetch'))) {
+        setErrorMessage('No pudimos conectar con el servicio. Comprueba tu conexión e intenta de nuevo.');
+      } else {
+        setErrorMessage(extractApiError(err, 'No se pudo crear la cuenta. Verifica los datos ingresados.'));
+      }
     } finally {
       setIsLoading(false);
     }
