@@ -257,10 +257,10 @@ export default function TransactionsPage() {
       )}
 
       {/* Barra de Filtros y Búsqueda */}
-      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 bg-white dark:bg-[#1c182d] p-4 rounded-2xl border border-[#cac4ce]/60 dark:border-white/10 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center gap-2.5 md:gap-3 bg-white dark:bg-[#1c182d] p-3.5 sm:p-4 rounded-2xl border border-[#cac4ce]/60 dark:border-white/10 shadow-sm">
         
         {/* Buscador */}
-        <div className="sm:col-span-5 relative">
+        <div className="w-full md:flex-1 relative">
           <Input
             placeholder="Buscar por descripción..."
             value={searchTerm}
@@ -274,85 +274,152 @@ export default function TransactionsPage() {
           />
         </div>
 
-        {/* Filtro por Categoría */}
-        <div className="sm:col-span-3">
-          <Select
-            label="Categoría"
-            placeholder="Todas"
-            selectedKeys={new Set([selectedCategory])}
-            onSelectionChange={(keys) => {
-              const val = Array.from(keys)[0];
-              if (val) {
-                setSelectedCategory(val);
-                setPage(1);
-              }
-            }}
-            size="sm"
-            variant="bordered"
-            classNames={{
-              trigger: "h-10 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25",
-              popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
-            }}
-          >
-            <SelectItem key="all" textValue="Todas las categorías">Todas las categorías</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={String(c.id)} textValue={c.name}>{c.name}</SelectItem>
-            ))}
-          </Select>
-        </div>
+        {/* Selectores */}
+        <div className="grid grid-cols-2 gap-2 md:flex md:items-center md:gap-3">
+          {/* Filtro por Categoría */}
+          <div className="col-span-2 sm:col-span-1 md:w-48">
+            <Select
+              label="Categoría"
+              placeholder="Todas"
+              selectedKeys={new Set([selectedCategory])}
+              onSelectionChange={(keys) => {
+                const val = Array.from(keys)[0];
+                if (val) {
+                  setSelectedCategory(val);
+                  setPage(1);
+                }
+              }}
+              size="sm"
+              variant="bordered"
+              classNames={{
+                trigger: "h-10 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25",
+                popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+              }}
+            >
+              <SelectItem key="all" textValue="Todas las categorías">Todas las categorías</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={String(c.id)} textValue={c.name}>{c.name}</SelectItem>
+              ))}
+            </Select>
+          </div>
 
-        {/* Filtro por Tipo */}
-        <div className="sm:col-span-2">
-          <Select
-            label="Tipo"
-            placeholder="Todos"
-            selectedKeys={new Set([selectedType])}
-            onSelectionChange={(keys) => {
-              const val = Array.from(keys)[0];
-              if (val) {
-                setSelectedType(val);
-                setPage(1);
-              }
-            }}
-            size="sm"
-            variant="bordered"
-            classNames={{
-              trigger: "h-10 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25",
-              popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
-            }}
-          >
-            <SelectItem key="all" textValue="Todos los tipos">Todos</SelectItem>
-            <SelectItem key="income" textValue="Ingresos">Ingresos</SelectItem>
-            <SelectItem key="expense" textValue="Gastos">Gastos</SelectItem>
-          </Select>
-        </div>
+          {/* Filtro por Tipo */}
+          <div className="col-span-1 md:w-32">
+            <Select
+              label="Tipo"
+              placeholder="Todos"
+              selectedKeys={new Set([selectedType])}
+              onSelectionChange={(keys) => {
+                const val = Array.from(keys)[0];
+                if (val) {
+                  setSelectedType(val);
+                  setPage(1);
+                }
+              }}
+              size="sm"
+              variant="bordered"
+              classNames={{
+                trigger: "h-10 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25",
+                popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+              }}
+            >
+              <SelectItem key="all" textValue="Todos los tipos">Todos</SelectItem>
+              <SelectItem key="income" textValue="Ingresos">Ingresos</SelectItem>
+              <SelectItem key="expense" textValue="Gastos">Gastos</SelectItem>
+            </Select>
+          </div>
 
-        {/* Ordenamiento */}
-        <div className="sm:col-span-2">
-          <Select
-            label="Orden"
-            selectedKeys={new Set([sortBy])}
-            onSelectionChange={(keys) => {
-              const val = Array.from(keys)[0];
-              if (val) setSortBy(val);
-            }}
-            size="sm"
-            variant="bordered"
-            classNames={{
-              trigger: "h-10 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25",
-              popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
-            }}
-          >
-            <SelectItem key="date-desc" textValue="Recientes">Recientes</SelectItem>
-            <SelectItem key="amount-desc" textValue="Mayor $">Mayor $</SelectItem>
-            <SelectItem key="amount-asc" textValue="Menor $">Menor $</SelectItem>
-          </Select>
+          {/* Ordenamiento */}
+          <div className="col-span-1 md:w-32">
+            <Select
+              label="Orden"
+              selectedKeys={new Set([sortBy])}
+              onSelectionChange={(keys) => {
+                const val = Array.from(keys)[0];
+                if (val) setSortBy(val);
+              }}
+              size="sm"
+              variant="bordered"
+              classNames={{
+                trigger: "h-10 rounded-xl border-[#cac4ce] dark:border-white/15 bg-[#fdfbf9] dark:bg-black/25",
+                popoverContent: "bg-white dark:bg-[#1c182d] border border-slate-200 dark:border-white/15 text-[#242038] dark:text-[#f7ece1] z-[150]",
+              }}
+            >
+              <SelectItem key="date-desc" textValue="Recientes">Recientes</SelectItem>
+              <SelectItem key="amount-desc" textValue="Mayor $">Mayor $</SelectItem>
+              <SelectItem key="amount-asc" textValue="Menor $">Menor $</SelectItem>
+            </Select>
+          </div>
         </div>
       </div>
 
-      {/* Tabla de Resultados */}
+      {/* Tabla y Lista de Resultados */}
       <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* Vista móvil compacta (estilo app nativa) */}
+        <div className="divide-y divide-slate-100 dark:divide-white/5 md:hidden px-3">
+          {loading ? (
+            <div className="py-8 text-center text-xs text-[#8d86c9] dark:text-[#cac4ce] animate-pulse">
+              Cargando movimientos...
+            </div>
+          ) : filteredTransactions.length > 0 ? (
+            filteredTransactions.map((t) => {
+              const isIncome = t.type === 'INCOME' || t.type === 'income';
+              const catName = t.category_detail?.name || t.category || 'General';
+              const catColor = t.category_detail?.color || '#9067c6';
+
+              return (
+                <div key={t.id} className="py-3 px-1 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0 pr-1">
+                    <div className={`p-2 rounded-xl shrink-0 ${
+                      isIncome 
+                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
+                        : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                    }`}>
+                      {isIncome ? <ArrowDownLeft className="w-4 h-4"/> : <ArrowUpRight className="w-4 h-4"/>}
+                    </div>
+                    <div className="truncate">
+                      <p className="text-xs font-bold text-[#242038] dark:text-[#f7ece1] truncate">
+                        {t.description || t.title || 'Sin concepto'}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-[#8d86c9] dark:text-[#cac4ce]">{t.date}</span>
+                        <span 
+                          className="text-[9px] px-1.5 py-0.2 rounded-full font-semibold"
+                          style={{
+                            backgroundColor: `${catColor}15`,
+                            color: catColor,
+                            border: `1px solid ${catColor}30`
+                          }}
+                        >
+                          {catName}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-right">
+                      <span className={`text-xs font-black ${isIncome ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        {isIncome ? '+' : '-'}${Math.abs(Number(t.amount)).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setItemToDelete(t.id)}
+                      className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors cursor-pointer"
+                      title="Eliminar transacción"
+                    >
+                      <Trash2 className="w-3.5 h-3.5"/>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : null}
+        </div>
+
+        {/* Vista escritorio: tabla completa */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="border-b border-[#cac4ce]/40 dark:border-white/10 bg-slate-50/75 dark:bg-black/20 text-xs font-semibold text-[#8d86c9] dark:text-[#cac4ce] uppercase tracking-wider">
@@ -437,16 +504,16 @@ export default function TransactionsPage() {
               </tbody>
             ) : null}
           </table>
-
-          {!loading && filteredTransactions.length === 0 && (
-            <EmptyState
-              title="No se encontraron movimientos"
-              description="No hay transacciones que coincidan con los filtros seleccionados."
-              actionLabel="+ Nueva Transacción"
-              onAction={handleOpenModal}
-            />
-          )}
         </div>
+
+        {!loading && filteredTransactions.length === 0 && (
+          <EmptyState
+            title="No se encontraron movimientos"
+            description="No hay transacciones que coincidan con los filtros seleccionados."
+            actionLabel="+ Nueva Transacción"
+            onAction={handleOpenModal}
+          />
+        )}
 
         {/* Pie de tabla con totalizadores y paginación */}
         <div className="p-4 border-t border-[#cac4ce]/40 dark:border-white/10 bg-slate-50/50 dark:bg-black/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#8d86c9] dark:text-[#cac4ce]">

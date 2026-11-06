@@ -271,14 +271,14 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 mt-7">
               <Link
                 to={isAuthenticated ? "/dashboard" : "/register"}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-sm font-bold shadow-lg shadow-[#9067c6]/25 transition-all hover:scale-[1.03] active:scale-[0.98] cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[#9067c6] hover:bg-[#8d86c9] text-white text-sm font-bold shadow-lg shadow-[#9067c6]/25 transition-all hover:scale-[1.03] active:scale-[0.98] cursor-pointer"
               >
                 {isAuthenticated ? "Ir a mi Panel" : "Comenzar ahora — Es gratis"}
                 <ArrowRight className="w-4 h-4"/>
               </Link>
               <Link
                 to={isAuthenticated ? "/dashboard" : "/login"}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border border-slate-300/80 dark:border-white/15 bg-white/80 dark:bg-white/[0.04] text-[#242038] dark:text-[#f7ece1] text-sm font-bold shadow-sm hover:border-[#9067c6]/50 hover:bg-slate-50 dark:hover:bg-white/5 transition-all hover:scale-[1.02]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border border-slate-300/80 dark:border-white/15 bg-white/80 dark:bg-white/[0.04] text-[#242038] dark:text-[#f7ece1] text-sm font-bold shadow-sm hover:border-[#9067c6]/50 hover:bg-slate-50 dark:hover:bg-white/5 transition-all hover:scale-[1.02]"
               >
                 {isAuthenticated ? "Ver mis balances →" : "Ver panel en vivo →"}
               </Link>
@@ -289,7 +289,7 @@ export default function HomePage() {
             </p>
 
             {/* Micro-tarjeta de la mascota Peshi flotando */}
-            <div className="flex items-center gap-3.5 p-3 sm:p-3.5 mt-7 rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md max-w-md group hover:border-[#9067c6]/40 transition-colors">
+            <div className="hidden md:flex items-center gap-3.5 p-3 sm:p-3.5 mt-7 rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md max-w-md group hover:border-[#9067c6]/40 transition-colors">
               <div className="relative shrink-0">
                 <img 
                   src="/peshi_logo_fin.png" 
@@ -732,7 +732,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-5 md:items-center gap-6 text-center md:text-left">
             {/* Columna de texto (3 columnas) */}
-            <div className="md:col-span-3 flex flex-col items-center md:items-start">
+            <div className="md:col-span-3 flex flex-col items-center md:items-start pt-4 sm:pt-0">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#9067c6]/10 text-[#9067c6] border border-[#9067c6]/20 text-[10px] font-bold uppercase tracking-wider mb-4">
                 <Sparkles className="w-3 h-3 text-[#9067c6]" />
                 Comienza hoy mismo
@@ -751,7 +751,7 @@ export default function HomePage() {
                   {isAuthenticated ? "Ir a mi Panel" : "Crear mi cuenta gratis"}
                   <ArrowRight className="w-4 h-4"/>
                 </Link>
-                <span className="text-[11px] text-[#242038]/50 dark:text-[#cac4ce]/60 font-medium">
+                <span className="text-[11px] text-[#242038]/50 dark:text-[#cac4ce]/60 font-medium pt-1 sm:pt-0">
                   Sin tarjetas ni contratos
                 </span>
               </div>
@@ -914,25 +914,8 @@ export default function HomePage() {
         </div>
 
         {/* Barra de Cierre Inferior (Copyright) */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#242038]/60 dark:text-[#cac4ce]/70">
+        <div className="pt-8 flex items-center justify-center sm:justify-between text-xs text-[#242038]/60 dark:text-[#cac4ce]/70">
           <p>© 2026 PESHITO. Todos los derechos reservados.</p>
-          <div className="flex items-center gap-4 text-[11px]">
-            <button
-              type="button"
-              onClick={() => handleOpenModal('terms')}
-              className="hover:text-[#9067c6] dark:hover:text-white transition-colors cursor-pointer"
-            >
-              Términos y condiciones
-            </button>
-            <span>•</span>
-            <button
-              type="button"
-              onClick={() => handleOpenModal('privacy')}
-              className="hover:text-[#9067c6] dark:hover:text-white transition-colors cursor-pointer"
-            >
-              Política de privacidad
-            </button>
-          </div>
         </div>
       </footer>
 
