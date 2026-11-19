@@ -1,18 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Plus, 
-  TrendingUp, 
-  TrendingDown, 
-  Wallet, 
-  PiggyBank, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
   ChevronRight, 
   ChevronLeft,
   AlertCircle,
+  FileDown,
   X
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { 
   Button, 
   Input, 
@@ -29,11 +23,12 @@ import { getCategories } from '../api/categories.service';
 import { extractApiError } from '../api/authApi';
 import { QUERY_KEYS } from '../api/queryKeys';
 import { transactionSchema } from '../schemas/transaction.schema';
-import { formatCurrency } from '../utils/formatters';
+import { exportMonthlyReportPdf } from '../utils/exportPdf';
 import { useToast } from '../components/common/Toast';
-import { SkeletonCard } from '../components/common/Skeleton';
-import EmptyState from '../components/common/EmptyState';
 import CategoryExpensePieChart from '../components/dashboard/CategoryExpensePieChart';
+import DashboardKpis from '../components/dashboard/DashboardKpis';
+import DashboardBudgetsProgress from '../components/dashboard/DashboardBudgetsProgress';
+import DashboardRecentTransactions from '../components/dashboard/DashboardRecentTransactions';
 
 const MONTH_NAMES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -216,10 +211,6 @@ export default function Dashboard() {
     });
   };
 
-  const netBalanceNum = parseFloat(summary.net_savings || "0");
-  const incomeNum = parseFloat(summary.total_income || "0");
-  const expenseNum = parseFloat(summary.total_expense || "0");
-
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 font-['Inter'] transition-colors duration-300 relative">
       
@@ -262,14 +253,34 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <Button 
-          color="primary"
-          onPress={handleOpenModal}
-          className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer w-full sm:w-auto"
-          startContent={<Plus className="w-4 h-4" />}
-        >
-          Nuevo Movimiento
-        </Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+          <Button
+            variant="bordered"
+            onPress={() => {
+              exportMonthlyReportPdf({
+                monthName: MONTH_NAMES[selectedMonth - 1],
+                year: selectedYear,
+                summary,
+                categoryBreakdown,
+                budgets,
+              });
+              addToast("Reporte PDF descargado", "success");
+            }}
+            isDisabled={summaryLoading || breakdownLoading}
+            className="border-[#cac4ce] dark:border-white/15 bg-white dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] font-semibold text-xs sm:text-sm rounded-xl cursor-pointer w-full sm:w-auto hover:border-[#9067c6]/50"
+            startContent={<FileDown className="w-4 h-4 text-[#9067c6]" />}
+          >
+            Reporte PDF
+          </Button>
+          <Button 
+            color="primary"
+            onPress={handleOpenModal}
+            className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer w-full sm:w-auto"
+            startContent={<Plus className="w-4 h-4" />}
+          >
+            Nuevo Movimiento
+          </Button>
+        </div>
       </div>
 
       {/* Alerta de Error si la API falla */}
@@ -289,91 +300,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Grid de KPIs Superiores (con Skeleton si carga) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        {summaryLoading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        ) : (
-          <>
-            {/* Balance Neto */}
-            <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold tracking-wider text-[#8d86c9] dark:text-[#cac4ce] uppercase">
-                  Balance Neto
-                </span>
-                <div className="p-2.5 rounded-xl bg-[#9067c6]/10 text-[#9067c6]">
-                  <Wallet className="w-5 h-5" />
-                </div>
-              </div>
-              <div className="text-2xl sm:text-3xl font-black text-[#242038] dark:text-[#f7ece1]">
-                {formatCurrency(netBalanceNum, 'ARS')}
-              </div>
-              <p className="text-xs text-[#8d86c9] dark:text-[#cac4ce] mt-1 font-medium">
-                Saldo acumulado del período
-              </p>
-            </div>
-
-            {/* Total Ingresos */}
-            <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold tracking-wider text-[#8d86c9] dark:text-[#cac4ce] uppercase">
-                  Ingresos Totales
-                </span>
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-              </div>
-              <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                +{formatCurrency(incomeNum, 'ARS')}
-              </div>
-              <p className="text-xs text-[#8d86c9] dark:text-[#cac4ce] mt-1 font-medium">
-                Ingresos recibidos este mes
-              </p>
-            </div>
-
-            {/* Total Gastos */}
-            <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold tracking-wider text-[#8d86c9] dark:text-[#cac4ce] uppercase">
-                  Gastos Totales
-                </span>
-                <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
-                  <TrendingDown className="w-5 h-5" />
-                </div>
-              </div>
-              <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
-                -{formatCurrency(expenseNum, 'ARS')}
-              </div>
-              <p className="text-xs text-[#8d86c9] dark:text-[#cac4ce] mt-1 font-medium">
-                Total de egresos registrados
-              </p>
-            </div>
-
-            {/* Tasa de Ahorro */}
-            <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold tracking-wider text-[#8d86c9] dark:text-[#cac4ce] uppercase">
-                  Tasa de Ahorro
-                </span>
-                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  <PiggyBank className="w-5 h-5" />
-                </div>
-              </div>
-              <div className="text-2xl sm:text-3xl font-black text-[#242038] dark:text-[#f7ece1]">
-                {(summary.savings_rate || 0).toFixed(1)}%
-              </div>
-              <p className="text-xs text-[#8d86c9] dark:text-[#cac4ce] mt-1 font-medium">
-                Porcentaje de ingresos retenido
-              </p>
-            </div>
-          </>
-        )}
-      </div>
+      {/* Grid de KPIs Superiores */}
+      <DashboardKpis summary={summary} loading={summaryLoading} />
 
       {/* Grid de Secciones Medias: Gráfico de Dona y Presupuestos */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -389,160 +317,19 @@ export default function Dashboard() {
         </div>
 
         {/* Presupuestos del Mes (1 columna) */}
-        <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-lg font-bold text-[#242038] dark:text-[#f7ece1]">
-                  Presupuestos del Mes
-                </h2>
-                <p className="text-xs text-[#8d86c9] dark:text-[#cac4ce]">
-                  Progreso para {MONTH_NAMES[selectedMonth - 1]}
-                </p>
-              </div>
-              <Link 
-                to="/budgets" 
-                className="text-xs font-semibold text-[#9067c6] hover:text-[#8d86c9] flex items-center gap-1 transition-colors"
-              >
-                Gestionar <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {budgetsLoading ? (
-              <div className="space-y-4">
-                <div className="h-4 w-full bg-slate-200 dark:bg-white/10 rounded-full animate-pulse" />
-                <div className="h-4 w-full bg-slate-200 dark:bg-white/10 rounded-full animate-pulse" />
-                <div className="h-4 w-full bg-slate-200 dark:bg-white/10 rounded-full animate-pulse" />
-              </div>
-            ) : budgets.length > 0 ? (
-              <div className="space-y-4">
-                {budgets.map((b) => {
-                  const spentVal = Number(b.spent_amount || 0);
-                  const limitVal = Number(b.amount || 0);
-                  const percent = b.progress_percentage !== undefined ? Number(b.progress_percentage) : (limitVal > 0 ? (spentVal / limitVal) * 100 : 0);
-                  const isOver = b.is_exceeded || percent > 100;
-                  const isWarning = percent >= 80 && !isOver;
-                  const categoryName = b.category_detail?.name || 'Categoría';
-
-                  return (
-                    <div key={b.id} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-[#242038] dark:text-[#f7ece1]">
-                          {categoryName}
-                        </span>
-                        <span className="font-semibold text-[#8d86c9] dark:text-[#cac4ce]">
-                          {formatCurrency(spentVal, 'ARS')} / {formatCurrency(limitVal, 'ARS')}
-                        </span>
-                      </div>
-                      <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-black/30 overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-300 ${
-                            isOver 
-                              ? 'bg-rose-500' 
-                              : isWarning 
-                              ? 'bg-amber-500' 
-                              : 'bg-[#9067c6]'
-                          }`}
-                          style={{ width: `${Math.min(percent, 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <EmptyState
-                title="Aún no definiste un presupuesto para este mes"
-                description="Establece límites para mantener tus finanzas bajo control."
-                actionLabel="Fijar presupuesto"
-                onAction={() => window.location.assign('/budgets')}
-              />
-            )}
-          </div>
-        </div>
+        <DashboardBudgetsProgress
+          budgets={budgets}
+          loading={budgetsLoading}
+          monthName={MONTH_NAMES[selectedMonth - 1]}
+        />
       </div>
 
       {/* Grid Inferior: Últimos Movimientos */}
-      <div className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-lg font-bold text-[#242038] dark:text-[#f7ece1]">
-              Últimos Movimientos
-            </h2>
-            <p className="text-xs text-[#8d86c9] dark:text-[#cac4ce]">
-              Tus transacciones más recientes registradas
-            </p>
-          </div>
-          <Link 
-            to="/transactions" 
-            className="text-xs font-semibold text-[#9067c6] hover:text-[#8d86c9] flex items-center gap-1 transition-colors"
-          >
-            Ver todas <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {txLoading ? (
-          <div className="space-y-3">
-            <div className="h-12 w-full bg-slate-200 dark:bg-white/10 rounded-xl animate-pulse" />
-            <div className="h-12 w-full bg-slate-200 dark:bg-white/10 rounded-xl animate-pulse" />
-            <div className="h-12 w-full bg-slate-200 dark:bg-white/10 rounded-xl animate-pulse" />
-          </div>
-        ) : recentTransactions.length > 0 ? (
-          <div className="divide-y divide-[#cac4ce]/30 dark:divide-white/5">
-            {recentTransactions.map((tx) => {
-              const isIncome = tx.type === 'INCOME';
-              const amountVal = Number(tx.amount || 0);
-              const categoryName = tx.category_detail?.name || 'General';
-              const categoryColor = tx.category_detail?.color || '#9067c6';
-
-              return (
-                <div key={tx.id} className="py-3.5 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={`p-2 rounded-xl shrink-0 ${
-                      isIncome 
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
-                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-                    }`}>
-                      {isIncome ? <ArrowDownLeft className="w-4 h-4"/> : <ArrowUpRight className="w-4 h-4"/>}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-[#242038] dark:text-[#f7ece1] truncate">
-                        {tx.description || 'Sin concepto'}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span 
-                          className="w-2 h-2 rounded-full" 
-                          style={{ backgroundColor: categoryColor }}
-                        />
-                        <span className="text-xs text-[#8d86c9] dark:text-[#cac4ce]">
-                          {categoryName}
-                        </span>
-                        <span className="text-xs text-[#8d86c9]/60 dark:text-[#cac4ce]/40">•</span>
-                        <span className="text-xs text-[#8d86c9] dark:text-[#cac4ce]">
-                          {tx.date}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <span className={`text-sm font-extrabold ${
-                    isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                  }`}>
-                    {isIncome ? '+' : '-'}{formatCurrency(Math.abs(amountVal), 'ARS')}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <EmptyState
-            title="Aún no tienes movimientos registrados"
-            description="Comienza hoy registrando tu primer ingreso o gasto."
-            actionLabel="+ Nuevo Movimiento"
-            onAction={handleOpenModal}
-          />
-        )}
-      </div>
+      <DashboardRecentTransactions
+        transactions={recentTransactions}
+        loading={txLoading}
+        onOpenModal={handleOpenModal}
+      />
 
       {/* Modal Nueva Transacción con HeroUI */}
       {isModalOpen && (
