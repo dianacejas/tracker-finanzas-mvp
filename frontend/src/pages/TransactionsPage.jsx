@@ -551,12 +551,26 @@ export default function TransactionsPage() {
         </div>
 
         {!loading && filteredTransactions.length === 0 && (
-          <EmptyState
-            title="No se encontraron movimientos"
-            description="No hay transacciones que coincidan con los filtros seleccionados."
-            actionLabel="+ Nueva Transacción"
-            onAction={handleOpenModal}
-          />
+          searchTerm.trim() !== '' || selectedType !== 'all' || selectedCategory !== 'all' ? (
+            <EmptyState
+              title="No se encontraron movimientos"
+              description="No hay transacciones que coincidan con la búsqueda o los filtros seleccionados."
+              actionLabel="Limpiar filtros"
+              onAction={() => {
+                setSearchTerm('');
+                setSelectedType('all');
+                setSelectedCategory('all');
+                setPage(1);
+              }}
+            />
+          ) : (
+            <EmptyState
+              title="Aún no tienes movimientos registrados"
+              description="Registra tu primer ingreso o gasto para empezar a visualizar el balance de tus finanzas."
+              actionLabel="+ Registrar mi primer movimiento"
+              onAction={() => handleOpenModal(null)}
+            />
+          )
         )}
 
         {/* Pie de tabla con totalizadores y paginación */}
