@@ -1,6 +1,7 @@
 """Vistas del módulo de categorías."""
 
 from django.db.models import ProtectedError, Q
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import serializers, viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
@@ -9,6 +10,14 @@ from .models import Category
 from .serializers import CategorySerializer
 
 
+@extend_schema_view(
+    list=extend_schema(tags=["Categories"], summary="Listar categorías globales y propias"),
+    create=extend_schema(tags=["Categories"], summary="Crear categoría personalizada"),
+    retrieve=extend_schema(tags=["Categories"], summary="Detalle de categoría"),
+    update=extend_schema(tags=["Categories"], summary="Actualizar categoría propia"),
+    partial_update=extend_schema(tags=["Categories"], summary="Editar parcialmente categoría propia"),
+    destroy=extend_schema(tags=["Categories"], summary="Eliminar categoría propia sin uso"),
+)
 class CategoryViewSet(viewsets.ModelViewSet):
     """CRUD de categorías visibles para el usuario autenticado.
 
@@ -23,7 +32,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Globales del sistema más las privadas del usuario autenticado."""
-        # drf-spectacular resuelve el queryset sin usuario autenticado.
         if getattr(self, "swagger_fake_view", False):
             return Category.objects.none()
 
@@ -44,13 +52,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
         serializer.save()
 
     def perform_destroy(self, instance):
-        """Bloquea el borrado de globales y de categorías en uso.
-
-        Las reglas son deliberadamente distintas en su código HTTP: intentar
-        borrar una categoría del sistema es un problema de permisos (403),
-        mientras que una categoría propia con movimientos asociados es un
-        conflicto de integridad (400) que el usuario puede resolver.
-        """
+        """Bloquea el borrado de globales y de categorías en uso."""
         if instance.is_global:
             raise PermissionDenied(
                 "Las categorías globales del sistema no se pueden eliminar."

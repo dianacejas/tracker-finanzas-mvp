@@ -1,10 +1,28 @@
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import permissions, viewsets
 
 from .models import Budget
 from .serializers import BudgetSerializer
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Budgets"],
+        summary="Listar presupuestos mensuales del usuario",
+        parameters=[
+            OpenApiParameter("month", int, description="Mes (1-12)"),
+            OpenApiParameter("year", int, description="Año (ej. 2026)"),
+        ],
+    ),
+    create=extend_schema(tags=["Budgets"], summary="Crear presupuesto mensual"),
+    retrieve=extend_schema(tags=["Budgets"], summary="Detalle de presupuesto"),
+    update=extend_schema(tags=["Budgets"], summary="Actualizar presupuesto"),
+    partial_update=extend_schema(tags=["Budgets"], summary="Actualizar parcialmente presupuesto"),
+    destroy=extend_schema(tags=["Budgets"], summary="Eliminar presupuesto"),
+)
 class BudgetViewSet(viewsets.ModelViewSet):
+    """CRUD de presupuestos mensuales por categoría del usuario autenticado."""
+
     serializer_class = BudgetSerializer
     permission_classes = [permissions.IsAuthenticated]
 
