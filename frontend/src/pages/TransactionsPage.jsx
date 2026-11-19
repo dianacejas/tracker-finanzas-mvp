@@ -4,10 +4,12 @@ import {
   ArrowUpRight, 
   ArrowDownLeft, 
   Plus, 
+  Pencil,
   Trash2, 
   X,
   ArrowLeftRight,
-  AlertCircle
+  AlertCircle,
+  FileSpreadsheet
 } from 'lucide-react';
 import { 
   Button, 
@@ -16,17 +18,25 @@ import {
   SelectItem, 
   DatePicker 
 } from "@heroui/react";
-import { getLocalTimeZone, today } from "@internationalized/date";
+import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getTransactions, createTransaction, deleteTransaction } from "../api/transactions.service";
+import { 
+  getTransactions, 
+  createTransaction, 
+  updateTransaction, 
+  deleteTransaction, 
+  exportTransactionsXlsx 
+} from "../api/transactions.service";
 import { getCategories } from "../api/categories.service";
 import { extractApiError } from "../api/authApi";
 import { QUERY_KEYS } from "../api/queryKeys";
 import { transactionSchema } from "../schemas/transaction.schema";
 import { formatCurrency } from "../utils/formatters";
+import { downloadBlob } from "../utils/exportPdf";
 import { useToast } from "../components/common/Toast";
 import { SkeletonTableRows } from "../components/common/Skeleton";
 import EmptyState from "../components/common/EmptyState";
+import TransactionMobileItem from "../components/transactions/TransactionMobileItem";
 
 export default function TransactionsPage() {
   const queryClient = useQueryClient();
@@ -40,8 +50,10 @@ export default function TransactionsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('date-desc'); // 'date-desc' | 'amount-desc' | 'amount-asc'
 
-  // Modal de Nueva Transacción
+  // Modal de Nueva / Editar Transacción
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newAmount, setNewAmount] = useState('');
   const [newCategoryId, setNewCategoryId] = useState('');
@@ -108,6 +120,21 @@ export default function TransactionsPage() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }) => updateTransaction(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      addToast("Transacción actualizada con éxito", "success");
+      setEditingTransaction(null);
+      setIsModalOpen(false);
+    },
+    onError: (err) => {
+      setModalError(extractApiError(err, "No se pudo actualizar la transacción."));
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: deleteTransaction,
     onSuccess: () => {
@@ -127,17 +154,51 @@ export default function TransactionsPage() {
     return categories.filter(c => c.type === 'BOTH' || c.type === requiredType);
   }, [categories, newType]);
 
-  const handleOpenModal = () => {
+  const handleOpenModal = (txToEdit = null) => {
     setModalError('');
-    setNewTitle('');
-    setNewAmount('');
-    setNewType('expense');
-    setSelectedDate(today(getLocalTimeZone()));
 
-    const initialEligible = categories.filter(c => c.type === 'BOTH' || c.type === 'EXPENSE');
-    setNewCategoryId(initialEligible.length > 0 ? String(initialEligible[0].id) : '');
+    if (txToEdit && txToEdit.id) {
+      const txType = txToEdit.type === 'INCOME' ? 'income' : 'expense';
+      setEditingTransaction(txToEdit);
+      setNewTitle(txToEdit.description || '');
+      setNewAmount(String(txToEdit.amount || ''));
+      setNewType(txType);
+      setNewCategoryId(String(txToEdit.category || txToEdit.category_detail?.id || ''));
+      try {
+        setSelectedDate(txToEdit.date ? parseDate(txToEdit.date) : today(getLocalTimeZone()));
+      } catch {
+        setSelectedDate(today(getLocalTimeZone()));
+      }
+    } else {
+      setEditingTransaction(null);
+      setNewTitle('');
+      setNewAmount('');
+      setNewType('expense');
+      setSelectedDate(today(getLocalTimeZone()));
+
+      const initialEligible = categories.filter(c => c.type === 'BOTH' || c.type === 'EXPENSE');
+      setNewCategoryId(initialEligible.length > 0 ? String(initialEligible[0].id) : '');
+    }
 
     setIsModalOpen(true);
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      const exportParams = {};
+      if (selectedType !== 'all') exportParams.type = selectedType.toUpperCase();
+      if (selectedCategory !== 'all') exportParams.category = Number(selectedCategory);
+      if (searchTerm.trim()) exportParams.search = searchTerm.trim();
+
+      const blob = await exportTransactionsXlsx(exportParams);
+      downloadBlob(blob, 'peshito_transacciones.xlsx');
+      addToast("Planilla Excel descargada", "success");
+    } catch (err) {
+      addToast(extractApiError(err, "No se pudo exportar la planilla."), "error");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleTypeChange = (type) => {
@@ -196,13 +257,19 @@ export default function TransactionsPage() {
       return;
     }
 
-    createMutation.mutate({
+    const payload = {
       amount: validation.data.amount.toFixed(2),
       category: validation.data.category,
       type: validation.data.type,
       date: validation.data.date,
       description: validation.data.description,
-    });
+    };
+
+    if (editingTransaction) {
+      updateMutation.mutate({ id: editingTransaction.id, payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
   return (
@@ -229,14 +296,25 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        <Button 
-          color="primary"
-          onPress={handleOpenModal}
-          className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer w-full sm:w-auto"
-          startContent={<Plus className="w-4 h-4" />}
-        >
-          Nueva Transacción
-        </Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+          <Button
+            variant="bordered"
+            onPress={handleExportExcel}
+            isLoading={isExporting}
+            className="border-[#cac4ce] dark:border-white/15 bg-white dark:bg-[#1c182d] text-[#242038] dark:text-[#f7ece1] font-semibold text-xs sm:text-sm rounded-xl cursor-pointer w-full sm:w-auto hover:border-[#9067c6]/50"
+            startContent={!isExporting && <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+          >
+            Exportar Excel
+          </Button>
+          <Button 
+            color="primary"
+            onPress={() => handleOpenModal(null)}
+            className="bg-[#9067c6] hover:bg-[#8d86c9] text-white font-semibold text-xs sm:text-sm shadow-md shadow-[#9067c6]/20 rounded-xl cursor-pointer w-full sm:w-auto"
+            startContent={<Plus className="w-4 h-4" />}
+          >
+            Nueva Transacción
+          </Button>
+        </div>
       </div>
 
       {/* Alerta de Error de API */}
@@ -363,58 +441,14 @@ export default function TransactionsPage() {
               Cargando movimientos...
             </div>
           ) : filteredTransactions.length > 0 ? (
-            filteredTransactions.map((t) => {
-              const isIncome = t.type === 'INCOME' || t.type === 'income';
-              const catName = t.category_detail?.name || t.category || 'General';
-              const catColor = t.category_detail?.color || '#9067c6';
-
-              return (
-                <div key={t.id} className="py-3 px-1 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0 pr-1">
-                    <div className={`p-2 rounded-xl shrink-0 ${
-                      isIncome 
-                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
-                        : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                    }`}>
-                      {isIncome ? <ArrowDownLeft className="w-4 h-4"/> : <ArrowUpRight className="w-4 h-4"/>}
-                    </div>
-                    <div className="truncate">
-                      <p className="text-xs font-bold text-[#242038] dark:text-[#f7ece1] truncate">
-                        {t.description || t.title || 'Sin concepto'}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] text-[#8d86c9] dark:text-[#cac4ce]">{t.date}</span>
-                        <span 
-                          className="text-[9px] px-1.5 py-0.2 rounded-full font-semibold"
-                          style={{
-                            backgroundColor: `${catColor}15`,
-                            color: catColor,
-                            border: `1px solid ${catColor}30`
-                          }}
-                        >
-                          {catName}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-right">
-                      <span className={`text-xs font-black ${isIncome ? 'text-emerald-500' : 'text-rose-500'}`}>
-                        {isIncome ? '+' : '-'}${Math.abs(Number(t.amount)).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setItemToDelete(t.id)}
-                      className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors cursor-pointer"
-                      title="Eliminar transacción"
-                    >
-                      <Trash2 className="w-3.5 h-3.5"/>
-                    </button>
-                  </div>
-                </div>
-              );
-            })
+            filteredTransactions.map((t) => (
+              <TransactionMobileItem
+                key={t.id}
+                transaction={t}
+                onEdit={handleOpenModal}
+                onDelete={setItemToDelete}
+              />
+            ))
           ) : null}
         </div>
 
@@ -489,14 +523,24 @@ export default function TransactionsPage() {
                         </span>
                       </td>
                       <td className="py-4 px-5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => setItemToDelete(tx.id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
-                          title="Eliminar transacción"
-                        >
-                          <Trash2 className="w-4 h-4"/>
-                        </button>
+                        <div className="inline-flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenModal(tx)}
+                            className="p-1.5 text-slate-400 hover:text-[#9067c6] dark:hover:text-[#b392e2] hover:bg-[#9067c6]/10 rounded-lg transition-colors cursor-pointer"
+                            title="Editar transacción"
+                          >
+                            <Pencil className="w-4 h-4"/>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setItemToDelete(tx.id)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                            title="Eliminar transacción"
+                          >
+                            <Trash2 className="w-4 h-4"/>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -557,7 +601,7 @@ export default function TransactionsPage() {
           <div className="w-full max-w-lg bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-3xl p-7 sm:p-8 shadow-2xl relative">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#cac4ce]/30 dark:border-white/10">
               <h3 className="text-lg font-extrabold text-[#242038] dark:text-[#f7ece1]">
-                Nueva Transacción
+                {editingTransaction ? 'Editar Transacción' : 'Nueva Transacción'}
               </h3>
               <button 
                 type="button"
@@ -678,7 +722,7 @@ export default function TransactionsPage() {
                 <Button
                   variant="bordered"
                   onPress={() => setIsModalOpen(false)}
-                  isDisabled={createMutation.isPending}
+                  isDisabled={createMutation.isPending || updateMutation.isPending}
                   className="rounded-xl border-[#cac4ce] dark:border-white/15 text-xs font-semibold cursor-pointer"
                 >
                   Cancelar
@@ -686,10 +730,10 @@ export default function TransactionsPage() {
                 <Button
                   color="primary"
                   type="submit"
-                  isLoading={createMutation.isPending}
+                  isLoading={createMutation.isPending || updateMutation.isPending}
                   className="bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs font-bold rounded-xl shadow-md shadow-[#9067c6]/20 cursor-pointer"
                 >
-                  Registrar
+                  {editingTransaction ? 'Guardar Cambios' : 'Registrar'}
                 </Button>
               </div>
             </form>

@@ -15,9 +15,7 @@ import {
   Button, 
   Input, 
   Select, 
-  SelectItem,
-  Accordion,
-  AccordionItem
+  SelectItem
 } from "@heroui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import budgetsService from "../api/budgets.service";
@@ -30,6 +28,7 @@ import { formatCurrency } from "../utils/formatters";
 import { useToast } from "../components/common/Toast";
 import { SkeletonCard } from "../components/common/Skeleton";
 import EmptyState from "../components/common/EmptyState";
+import BudgetCard from "../components/budgets/BudgetCard";
 
 const MONTH_NAMES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -45,6 +44,7 @@ export default function BudgetsPage() {
 
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState(null);
   const [newCategoryId, setNewCategoryId] = useState('');
   const [newLimit, setNewLimit] = useState('');
   const [modalError, setModalError] = useState('');
@@ -107,6 +107,20 @@ export default function BudgetsPage() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }) => budgetsService.updateBudget(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+      addToast("Presupuesto actualizado con éxito", "success");
+      setEditingBudget(null);
+      setIsModalOpen(false);
+    },
+    onError: (err) => {
+      setModalError(extractApiError(err, "No se pudo actualizar el presupuesto."));
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: budgetsService.deleteBudget,
     onSuccess: () => {
@@ -157,13 +171,20 @@ export default function BudgetsPage() {
     deleteMutation.mutate(id);
   };
 
-  const handleOpenModal = () => {
+  const handleOpenModal = (budgetToEdit = null) => {
     setModalError('');
-    setNewLimit('');
-    if (categories.length > 0) {
-      setNewCategoryId(String(categories[0].id));
+    if (budgetToEdit && budgetToEdit.id) {
+      setEditingBudget(budgetToEdit);
+      setNewCategoryId(String(budgetToEdit.category || budgetToEdit.category_detail?.id || ''));
+      setNewLimit(String(budgetToEdit.amount || ''));
     } else {
-      setNewCategoryId('');
+      setEditingBudget(null);
+      setNewLimit('');
+      if (categories.length > 0) {
+        setNewCategoryId(String(categories[0].id));
+      } else {
+        setNewCategoryId('');
+      }
     }
     setIsModalOpen(true);
   };
@@ -185,12 +206,18 @@ export default function BudgetsPage() {
       return;
     }
 
-    createMutation.mutate({
+    const payload = {
       category: validation.data.category,
       amount: validation.data.amount.toFixed(2),
       month: validation.data.month,
       year: validation.data.year,
-    });
+    };
+
+    if (editingBudget) {
+      updateMutation.mutate({ id: editingBudget.id, payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
   return (
@@ -326,163 +353,15 @@ export default function BudgetsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {budgets.length > 0 ? (
-            budgets.map((b) => {
-              const spentVal = Number(b.spent_amount || 0);
-              const limitVal = Number(b.amount || 0);
-              const percent = b.progress_percentage !== undefined ? Number(b.progress_percentage) : (limitVal > 0 ? (spentVal / limitVal) * 100 : 0);
-              const isOver = b.is_exceeded || percent > 100;
-              const isWarning = percent >= 80 && !isOver;
-              const categoryName = b.category_detail?.name || 'Categoría';
-              const categoryColor = b.category_detail?.color || '#9067c6';
-
-              const categoryTransactions = transactions.filter((t) => {
-                const isCategoryMatch = 
-                  (t.category && b.category && String(t.category) === String(b.category)) ||
-                  (t.category_detail?.name && b.category_detail?.name && 
-                    t.category_detail.name.toLowerCase() === b.category_detail.name.toLowerCase()) ||
-                  (t.category && typeof t.category === 'string' && b.category && typeof b.category === 'string' &&
-                    t.category.toLowerCase() === b.category.toLowerCase());
-
-                const isExpense = 
-                  t.type === 'EXPENSE' || 
-                  t.type?.toLowerCase() === 'expense' || 
-                  Number(t.amount) < 0;
-
-                return isCategoryMatch && isExpense;
-              });
-
-              return (
-                <div 
-                  key={b.id} 
-                  className="bg-white dark:bg-[#1c182d] border border-[#cac4ce]/60 dark:border-white/10 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span 
-                          className="w-3 h-3 rounded-full shrink-0" 
-                          style={{ backgroundColor: categoryColor }} 
-                        />
-                        <h3 className="font-bold text-base text-[#242038] dark:text-[#f7ece1]">
-                          {categoryName}
-                        </h3>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setItemToDelete(b.id);
-                        }}
-                        className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg transition-colors cursor-pointer"
-                        title="Eliminar presupuesto"
-                      >
-                        <Trash2 className="w-4 h-4"/>
-                      </button>
-                    </div>
-
-                    <div className="flex items-baseline justify-between mb-2">
-                      <span className="text-2xl font-black text-[#242038] dark:text-[#f7ece1]">
-                        {formatCurrency(spentVal, 'ARS')}
-                      </span>
-                      <span className="text-xs font-semibold text-[#8d86c9] dark:text-[#cac4ce]">
-                        de {formatCurrency(limitVal, 'ARS')}
-                      </span>
-                    </div>
-
-                    {/* Barra de progreso */}
-                    <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-black/30 overflow-hidden mb-2">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          isOver 
-                            ? 'bg-rose-500' 
-                            : isWarning 
-                            ? 'bg-amber-500' 
-                            : 'bg-[#9067c6]'
-                        }`}
-                        style={{ width: `${Math.min(percent, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between text-xs pt-3 border-t border-[#cac4ce]/30 dark:border-white/5 mt-3">
-                      <span className={`font-semibold ${
-                        isOver 
-                          ? 'text-rose-600 dark:text-rose-400' 
-                          : isWarning 
-                          ? 'text-amber-600 dark:text-amber-400' 
-                          : 'text-[#8d86c9] dark:text-[#cac4ce]'
-                      }`}>
-                        {isOver 
-                          ? `Excedido por ${formatCurrency(spentVal - limitVal, 'ARS')}` 
-                          : `Quedan ${formatCurrency(limitVal - spentVal, 'ARS')}`}
-                      </span>
-                      <span className="font-bold text-[#242038] dark:text-[#f7ece1]">
-                        {percent.toFixed(0)}%
-                      </span>
-                    </div>
-
-                    {/* Desglose de consumos recientes con Accordion de HeroUI */}
-                    <div className="mt-3 border-t border-slate-100 dark:border-white/5 pt-1">
-                      <Accordion
-                        isCompact
-                        className="px-0"
-                        itemClasses={{
-                          base: "py-0 w-full",
-                          title: "text-[11px] font-semibold text-[#8d86c9] dark:text-[#cac4ce] hover:text-[#9067c6] dark:hover:text-white transition-colors",
-                          trigger: "px-1 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors",
-                          content: "pt-1 pb-2 space-y-2",
-                        }}
-                      >
-                        <AccordionItem
-                          key="consumos"
-                          aria-label="Ver consumos recientes"
-                          title={
-                            <div className="flex items-center justify-between w-full pr-2">
-                              <span>Ver consumos recientes</span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-[#242038] dark:text-[#cac4ce]">
-                                {categoryTransactions.length}
-                              </span>
-                            </div>
-                          }
-                        >
-                          {categoryTransactions.length > 0 ? (
-                            <div className="space-y-1.5">
-                              {categoryTransactions.slice(0, 3).map((item) => (
-                                <div 
-                                  key={item.id} 
-                                  className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5"
-                                >
-                                  <div className="truncate max-w-[65%]">
-                                    <p className="font-semibold text-[#242038] dark:text-[#f7ece1] truncate">
-                                      {item.description || item.title || item.concept || 'Gasto registrado'}
-                                    </p>
-                                    <p className="text-[10px] text-[#8d86c9] dark:text-[#cac4ce]">{item.date}</p>
-                                  </div>
-                                  <span className="font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
-                                    -${Math.abs(Number(item.amount)).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                                  </span>
-                                </div>
-                              ))}
-
-                              {categoryTransactions.length > 3 && (
-                                <p className="text-center text-[10px] text-[#9067c6] font-semibold pt-1 cursor-pointer hover:underline">
-                                  + {categoryTransactions.length - 3} movimientos más en Transacciones
-                                </p>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-[11px] text-center text-[#8d86c9] dark:text-[#cac4ce] py-2">
-                              Sin gastos registrados en esta categoría este mes.
-                            </p>
-                          )}
-                        </AccordionItem>
-                      </Accordion>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+            budgets.map((b) => (
+              <BudgetCard
+                key={b.id}
+                budget={b}
+                transactions={transactions}
+                onEdit={handleOpenModal}
+                onDelete={setItemToDelete}
+              />
+            ))
           ) : (
             <div className="col-span-full">
               <EmptyState
@@ -503,7 +382,7 @@ export default function BudgetsPage() {
             
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#cac4ce]/30 dark:border-white/10">
               <h3 className="text-lg font-extrabold text-[#242038] dark:text-[#f7ece1]">
-                Fijar Presupuesto ({MONTH_NAMES[selectedMonth - 1]} {selectedYear})
+                {editingBudget ? 'Editar' : 'Fijar'} Presupuesto ({MONTH_NAMES[selectedMonth - 1]} {selectedYear})
               </h3>
               <button 
                 type="button"
@@ -571,7 +450,7 @@ export default function BudgetsPage() {
                 <Button
                   variant="bordered"
                   onPress={() => setIsModalOpen(false)}
-                  isDisabled={createMutation.isPending}
+                  isDisabled={createMutation.isPending || updateMutation.isPending}
                   className="rounded-xl border-[#cac4ce] dark:border-white/15 text-xs font-semibold cursor-pointer"
                 >
                   Cancelar
@@ -579,10 +458,10 @@ export default function BudgetsPage() {
                 <Button
                   color="primary"
                   type="submit"
-                  isLoading={createMutation.isPending}
+                  isLoading={createMutation.isPending || updateMutation.isPending}
                   className="bg-[#9067c6] hover:bg-[#8d86c9] text-white text-xs font-bold rounded-xl shadow-md shadow-[#9067c6]/20 cursor-pointer"
                 >
-                  Guardar Límite
+                  {editingBudget ? 'Guardar Cambios' : 'Guardar Límite'}
                 </Button>
               </div>
             </form>
