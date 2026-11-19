@@ -1,4 +1,4 @@
-"""Tests del comando seed_categories: contenido, idempotencia y alcance."""
+"""Tests de los comandos seed_categories y seed_peshito: contenido e idempotencia."""
 
 from io import StringIO
 
@@ -6,15 +6,18 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
 
-from apps.categories.models import Category
+from apps.budgets.models import Budget
 from apps.categories.management.commands.seed_categories import SYSTEM_CATEGORIES
+from apps.categories.management.commands.seed_peshito import DEMO_EMAIL, DEMO_PASSWORD
+from apps.categories.models import Category
+from apps.transactions.models import Transaction
 
 User = get_user_model()
 PASSWORD = "ClaveSegura123"
 
 
 def run_seed():
-    """Ejecuta el comando capturando su salida estándar."""
+    """Ejecuta el comando seed_categories capturando su salida estándar."""
     out = StringIO()
     call_command("seed_categories", stdout=out)
     return out.getvalue()
@@ -104,3 +107,23 @@ class SeedCategoriesCommandTests(TestCase):
                 self.assertTrue(category.icon)
                 self.assertTrue(category.color.startswith("#"))
                 self.assertEqual(len(category.color), 7)
+
+
+class SeedPeshitoCommandTests(TestCase):
+    """El comando seed_peshito crea el entorno demo de forma idempotente."""
+
+    def test_seed_peshito_creates_demo_user_transactions_and_budgets(self):
+        out = StringIO()
+        call_command("seed_peshito", stdout=out)
+
+        user = User.objects.get(email=DEMO_EMAIL)
+        self.assertTrue(user.check_password(DEMO_PASSWORD))
+        tx_count = Transaction.objects.filter(user=user).count()
+        budget_count = Budget.objects.filter(user=user).count()
+        self.assertGreaterEqual(tx_count, 15)
+        self.assertEqual(budget_count, 4)
+
+        # Segunda ejecución idempotente
+        call_command("seed_peshito", stdout=out)
+        self.assertEqual(Transaction.objects.filter(user=user).count(), tx_count)
+        self.assertEqual(Budget.objects.filter(user=user).count(), budget_count)
