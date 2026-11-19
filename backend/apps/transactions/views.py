@@ -1,12 +1,16 @@
 """Vistas del módulo de transacciones."""
 
+from django.db.models import Q
+from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
 from .filters import TransactionFilterSet
 from .models import Transaction
 from .serializers import TransactionSerializer
+from .xlsx_export import build_transactions_xlsx
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -41,3 +45,21 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Inyecta la pertenencia del movimiento: el cliente no la decide."""
         serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=["get"], url_path="export")
+    def export_xlsx(self, request):
+        """Exporta los movimientos filtrados del usuario a una planilla Excel (.xlsx)."""
+        queryset = self.filter_queryset(self.get_queryset())
+        search = (request.query_params.get("search") or "").strip()
+        if search:
+            queryset = queryset.filter(
+                Q(description__icontains=search) | Q(category__name__icontains=search)
+            )
+
+        content = build_transactions_xlsx(queryset)
+        response = HttpResponse(
+            content,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = 'attachment; filename="peshito_transacciones.xlsx"'
+        return response
