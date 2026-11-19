@@ -138,9 +138,27 @@ SIMPLE_JWT = {
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
-# drf-spectacular: ambos modelos definen un campo `type`, así que hay que
-# nombrar los enums de forma explícita para que no colisionen en el esquema.
+# drf-spectacular: metadatos OpenAPI 3.0 y esquema JWT Bearer.
 SPECTACULAR_SETTINGS = {
+    "TITLE": "PESHITO Finance API",
+    "DESCRIPTION": (
+        "API REST para gestión de finanzas personales: autenticación JWT, "
+        "categorías híbridas, movimientos de ingresos/gastos, presupuestos "
+        "mensuales y analíticas financieras."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SECURITY": [{"BearerAuth": []}],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+    },
     "ENUM_NAME_OVERRIDES": {
         "CategoryTypeEnum": "apps.categories.models.Category.Type",
         "TransactionTypeEnum": "apps.transactions.models.Transaction.Type",
