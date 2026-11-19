@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: peshito_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: peshito_db
+      POSTGRES_USER: peshito_user
+      POSTGRES_PASSWORD: peshito_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U peshito_user -d peshito_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: peshito_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      DEBUG: "True"
+      SECRET_KEY: "peshito-docker-dev-secret-key-2026"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0,backend"
+      CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173"
+      POSTGRES_DB: peshito_db
+      POSTGRES_USER: peshito_user
+      POSTGRES_PASSWORD: peshito_password
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: peshito_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: "http://localhost:8000/api/v1"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
