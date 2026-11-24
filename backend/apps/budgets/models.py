@@ -10,23 +10,33 @@ class Budget(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="budgets",
+        verbose_name="usuario",
     )
     category = models.ForeignKey(
         "categories.Category",
         on_delete=models.CASCADE,
         related_name="budgets",
+        verbose_name="categoría",
     )
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(
+        "monto",
+        max_digits=12,
+        decimal_places=2,
+    )
     month = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(12)]
+        "mes",
+        validators=[MinValueValidator(1), MaxValueValidator(12)],
     )
     year = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(2000)]
+        "año",
+        validators=[MinValueValidator(2000)],
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField("creado el", auto_now_add=True)
+    updated_at = models.DateTimeField("actualizado el", auto_now=True)
 
     class Meta:
+        verbose_name = "presupuesto"
+        verbose_name_plural = "presupuestos"
         ordering = ["-year", "-month", "category__name"]
         constraints = [
             models.UniqueConstraint(
@@ -40,4 +50,6 @@ class Budget(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user_id} - {self.category_id} {self.year}-{self.month:02d}: {self.amount}"
+        category_name = getattr(self.category, "name", self.category_id)
+        user_label = getattr(self.user, "email", self.user_id)
+        return f"{user_label} - {category_name} ({self.year}-{self.month:02d}): ${self.amount}"

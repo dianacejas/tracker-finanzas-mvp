@@ -1,39 +1,54 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "../layouts/AppLayout";
-import Dashboard from "../pages/Dashboard";
-import LoginPage from "../pages/LoginPage";
-import NotFound from "../pages/NotFound";
-import Register from "../pages/Register";
-import TransactionsPage from "../pages/TransactionsPage";
-import BudgetsPage from "../pages/BudgetsPage";
+import HomePage from "../pages/HomePage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { PublicRoute } from "./PublicRoute";
+
+const Login = lazy(() => import("../pages/Login"));
+const Register = lazy(() => import("../pages/Register"));
+const Dashboard = lazy(() => import("../pages/Dashboard"));
+const TransactionsPage = lazy(() => import("../pages/TransactionsPage"));
+const BudgetsPage = lazy(() => import("../pages/BudgetsPage"));
+const NotFound = lazy(() => import("../pages/NotFound"));
+
+function RouteFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#faf8f6] dark:bg-[#242038]">
+      <div className="w-8 h-8 rounded-full border-3 border-[#9067c6]/30 border-t-[#9067c6] animate-spin" />
+    </div>
+  );
+}
 
 /**
  * Mapa de rutas de la aplicacion.
  *
- * Las rutas publicas viven bajo PublicRoute (que expulsa a los usuarios ya
- * autenticados) y las privadas bajo ProtectedRoute, todas dentro de AppLayout.
+ * La landing page vive en la raiz `/` como ruta publica accesible para todos.
+ * Las rutas de autenticacion viven bajo PublicRoute (que expulsa a usuarios ya autenticados)
+ * y las privadas viven bajo ProtectedRoute dentro de AppLayout.
  */
 export function AppRoutes() {
   return (
-    <Routes>
-      <Route element={<PublicRoute />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<Register />} />
-      </Route>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
 
-      <Route element={<ProtectedRoute />}>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/transactions" element={<TransactionsPage />} />
-          <Route path="/budgets" element={<BudgetsPage />} />
+        <Route element={<PublicRoute />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
         </Route>
-      </Route>
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/budgets" element={<BudgetsPage />} />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }

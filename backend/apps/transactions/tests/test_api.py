@@ -2,6 +2,8 @@
 
 from datetime import date, timedelta
 from decimal import Decimal
+import io
+import zipfile
 
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -292,3 +294,73 @@ class TransactionPaginationTests(TransactionApiBaseTests):
         response = self.client.get(LIST_URL)
 
         self.assertEqual(response.data["count"], 25)
+
+
+class TransactionExportXlsxTests(TransactionApiBaseTests):
+    """Pruebas del endpoint de exportación a Excel (.xlsx)."""
+
+    EXPORT_URL = f"{LIST_URL}export/"
+
+    def test_export_requires_authentication(self):
+        """La exportación exige un usuario autenticado."""
+        self.client.force_authenticate(user=None)
+        response = self.client.get(self.EXPORT_URL)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_export_returns_valid_xlsx_with_only_own_transactions(self):
+        """Genera un .xlsx válido incluyendo solo los movimientos del usuario."""
+        self.make_transaction(
+            amount=Decimal("1250.50"),
+            type=Transaction.Type.EXPENSE,
+            description="Compra Súper",
+        )
+        self.make_transaction(
+            user=self.other,
+            amount=Decimal("9999.00"),
+            type=Transaction.Type.EXPENSE,
+            description="Gasto Ajeno Secreto",
+        )
+
+        response = self.client.get(self.EXPORT_URL)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertIn("peshito_transacciones.xlsx", response["Content-Disposition"])
+
+        with zipfile.ZipFile(io.BytesIO(response.content), "r") as zf:
+            self.assertIn("xl/worksheets/sheet1.xml", zf.namelist())
+            sheet_xml = zf.read("xl/worksheets/sheet1.xml").decode("utf-8")
+
+        self.assertIn("Compra Súper", sheet_xml)
+        self.assertIn("-1250.50", sheet_xml)
+        self.assertNotIn("Gasto Ajeno Secreto", sheet_xml)
+
+    def test_export_respects_type_and_search_filters(self):
+        """Los filtros de tipo y búsqueda aplican también a la planilla exportada."""
+        self.make_transaction(
+            category=self.income_global,
+            amount=Decimal("5000.00"),
+            type=Transaction.Type.INCOME,
+            description="Honorarios Diseño",
+        )
+        self.make_transaction(
+            amount=Decimal("300.00"),
+            type=Transaction.Type.EXPENSE,
+            description="Café Oficina",
+        )
+
+        response = self.client.get(
+            self.EXPORT_URL, {"type": Transaction.Type.INCOME, "search": "Honorarios"}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        with zipfile.ZipFile(io.BytesIO(response.content), "r") as zf:
+            sheet_xml = zf.read("xl/worksheets/sheet1.xml").decode("utf-8")
+
+        self.assertIn("Honorarios Diseño", sheet_xml)
+        self.assertIn("5000.00", sheet_xml)
+        self.assertNotIn("Café Oficina", sheet_xml)

@@ -36,9 +36,21 @@ export const deleteTransaction = async (id) => {
   return true;
 };
 
+/**
+ * Descarga los movimientos filtrados como planilla Excel (.xlsx)
+ */
+export const exportTransactionsXlsx = async (params = {}) => {
+  const response = await api.get(`${TRANSACTIONS_URL}export/`, {
+    params,
+    responseType: "blob",
+  });
+  return response.data;
+};
+
 export default {
   getTransactions,
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  exportTransactionsXlsx,
 };

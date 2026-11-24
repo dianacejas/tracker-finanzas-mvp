@@ -27,6 +27,11 @@ export function AuthProvider({ children }) {
 
   const clearSession = useCallback(() => {
     clearAccessToken();
+    try {
+      localStorage.removeItem("access_token");
+    } catch {
+      // ignore
+    }
     setUser(null);
   }, []);
 
@@ -42,33 +47,25 @@ export function AuthProvider({ children }) {
 
     async function bootstrap() {
       try {
-        // Evitar llamada si no hay refresh token en storage/localStorage
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-          if (!cancelled) {
-            clearSession();
-            setLoading(false);
-          }
-          return;
-        }
-
+        // Intentar restaurar sesión desde cookie HttpOnly vía refresh
         const access = await refreshRequest();
         if (cancelled) return;
         setAccessToken(access);
+        if (access) {
+          try {
+            localStorage.setItem("access_token", access);
+          } catch {
+            // ignore
+          }
+        }
 
         const profile = await fetchProfileRequest();
-        if (!cancelied) {
+        if (!cancelled) {
           setUser(profile);
         }
       } catch {
         // Sin sesion previa valida: el usuario vera las rutas publicas.
         if (!cancelled) {
-          try {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-          } catch {
-            // ignore
-          }
           clearSession();
         }
       } finally {
@@ -85,6 +82,13 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const data = await loginRequest(email, password);
     setAccessToken(data.access);
+    if (data?.access) {
+      try {
+        localStorage.setItem("access_token", data.access);
+      } catch {
+        // ignore
+      }
+    }
 
     try {
       const profile = await fetchProfileRequest();
